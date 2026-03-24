@@ -124,7 +124,7 @@ export async function renderLibrary(container) {
             }
 
             gridHtml += `
-                <a href="#/artist/${encodeURIComponent(name)}" class="glass-card artist-card" style="text-align: center; padding: 24px; text-decoration: none; color: inherit;">
+                <a href="#/artist/${encodeURIComponent(name)}?source=${currentSource}" class="glass-card artist-card" style="text-align: center; padding: 24px; text-decoration: none; color: inherit;">
                     <img src="${coverUrl}" style="width: 100%; aspect-ratio: 1; border-radius: 50%; object-fit: cover; margin-bottom: 16px; box-shadow: 0 12px 24px rgba(0,0,0,0.5);">
                     <h3 style="font-size: 16px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${name}</h3>
                     <p class="text-secondary" style="font-size: 13px; margin-top: 4px;">Artiste</p>
@@ -146,7 +146,7 @@ export async function renderLibrary(container) {
             let coverUrl = album.tracks.length > 0 ? coverForTrackId(album.tracks[0], albums, tracks) : '/assets/default-cover.png';
 
             gridHtml += `
-                <a href="#/album/${encodeURIComponent(name)}" class="glass-card album-card" style="padding: 0; text-decoration: none; color: inherit;">
+                <a href="#/album/${encodeURIComponent(name)}?source=${currentSource}" class="glass-card album-card" style="padding: 0; text-decoration: none; color: inherit;">
                     <img src="${coverUrl}" style="width: 100%; aspect-ratio: 1; object-fit: cover;">
                     <div style="padding: 16px;">
                         <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${name}</h3>

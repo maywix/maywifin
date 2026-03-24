@@ -54,7 +54,8 @@ export function updatePlayerUI(track, isPlaying) {
         
         // Add Artist Link
         const artistEl = document.getElementById('player-artist');
-        artistEl.innerHTML = `<a href="#/artist/${encodeURIComponent(track.artist)}" style="color: inherit; text-decoration: none;" class="hover-underline">${track.artist}</a>`;
+        const sourceQuery = track.type === 'jellyfin' ? '?source=jellyfin' : '?source=local';
+        artistEl.innerHTML = `<a href="#/artist/${encodeURIComponent(track.artist)}${sourceQuery}" style="color: inherit; text-decoration: none;" class="hover-underline">${track.artist}</a>`;
         
         let coverUrl = '/assets/default-cover.png';
         if (track.type === 'local') {
