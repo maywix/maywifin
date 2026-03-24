@@ -133,7 +133,16 @@ export async function renderSettings(container) {
         try {
             statusEl.textContent = 'Scan Jellyfin en cours...';
             const res = await Api.scanJellyfinLibrary();
-            statusEl.textContent = res.message || 'Scan Jellyfin déclenché.';
+            statusEl.textContent = (res.message || 'Scan Jellyfin déclenché.') + ' (la synchronisation peut prendre quelques secondes)';
+
+            // Refresh jellyfin cache in app state
+            try {
+                const jfTracksRaw = await Api.getJellyfinTracks();
+                const jfItems = Array.isArray(jfTracksRaw) ? jfTracksRaw : (jfTracksRaw.Items || []);
+                AppState.jellyfin.tracks = jfItems;
+            } catch (_e) {
+                // optional refresh; ignore failures here
+            }
         } catch (e) {
             statusEl.textContent = 'Erreur: ' + e.message;
         }
