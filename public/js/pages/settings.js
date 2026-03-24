@@ -169,5 +169,4 @@ export async function renderSettings(container) {
 
     // Initialize auto-scan select with saved value
     document.getElementById('setting-auto-scan').value = AppState.settings.auto_scan_interval || '0';
-    });
 }
