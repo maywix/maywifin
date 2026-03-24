@@ -17,7 +17,10 @@ export const Api = {
                     ...options.headers
                 }
             });
-            if (!res.ok) throw new Error(`API Error: ${res.statusText}`);
+            if (!res.ok) {
+                const errorData = await res.json().catch(() => ({}));
+                throw new Error(errorData.error || `API Error: ${res.statusText}`);
+            }
             return await res.json();
         } catch (err) {
             console.error(`Failed fetching ${endpoint}:`, err);

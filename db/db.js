@@ -2,13 +2,13 @@ const Database = require('better-sqlite3');
 const path = require('path');
 const fs = require('fs');
 
-// Ensure data directory exists
-const dataDir = path.join(__dirname, '..', 'data');
-if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir, { recursive: true });
+// Ensure db directory exists
+const dbDir = path.join(__dirname, '..', 'db');
+if (!fs.existsSync(dbDir)) {
+    fs.mkdirSync(dbDir, { recursive: true });
 }
 
-const db = new Database(path.join(dataDir, 'maywifin.sqlite'));
+const db = new Database(path.join(dbDir, 'maywifin.sqlite'));
 
 // Enable WAL mode for better performance
 db.pragma('journal_mode = WAL');

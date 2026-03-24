@@ -8,9 +8,11 @@ services:
       - "3000:3000"
     volumes:
       - .:/app
+      - ./db:/app/db
       - /app/node_modules
-      # Replace /mnt/music with your actual music folder path on the host if using local path
-      # - /path/to/your/music:/music
+      # MONTEZ VOTRE MUSIQUE ICI (Host Path : Container Path)
+      # Exemple: - /home/maywix/music:/music
+      # - /VOTRE/CHEMIN/MUSIQUE:/music
     environment:
       - PORT=3000
     restart: unless-stopped

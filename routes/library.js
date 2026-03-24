@@ -39,8 +39,11 @@ router.get('/status', (req, res) => {
 
 router.post('/scan', async (req, res) => {
     const localPath = getSetting('source_local');
-    if (!localPath || !fs.existsSync(localPath)) {
-        return res.status(400).json({ error: "Invalid or unset local path" });
+    if (!localPath) {
+        return res.status(400).json({ error: "Veuillez d'abord enregistrer un chemin local." });
+    }
+    if (!fs.existsSync(localPath)) {
+        return res.status(400).json({ error: `Le dossier est introuvable dans le conteneur : ${localPath}. Vérifiez vos volumes Docker.` });
     }
 
     if (isScanning) return res.status(400).json({ message: "Already scanning" });
