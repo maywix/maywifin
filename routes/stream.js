@@ -8,7 +8,39 @@ function getJellyfinConfig() {
     const url = db.prepare("SELECT value FROM settings WHERE key = 'source_jellyfin_url'").get()?.value;
     const apiKey = db.prepare("SELECT value FROM settings WHERE key = 'source_jellyfin_apikey'").get()?.value;
     const userId = db.prepare("SELECT value FROM settings WHERE key = 'source_jellyfin_userid'").get()?.value;
-    return { url, apiKey, userId };
+    const username = db.prepare("SELECT value FROM settings WHERE key = 'source_jellyfin_username'").get()?.value;
+    const password = db.prepare("SELECT value FROM settings WHERE key = 'source_jellyfin_password'").get()?.value;
+    return { url, apiKey, userId, username, password };
+}
+
+async function getJellyfinAuth() {
+    const { url, apiKey, userId, username, password } = getJellyfinConfig();
+    if (!url) throw new Error('Jellyfin URL missing');
+
+    if (apiKey && userId) {
+        return { url, token: apiKey, userId };
+    }
+
+    if (!username || !password) {
+        throw new Error('Jellyfin credentials missing');
+    }
+
+    const baseUrl = url.endsWith('/') ? url.slice(0, -1) : url;
+    const authRes = await fetch(`${baseUrl}/Users/AuthenticateByName`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Emby-Authorization': 'MediaBrowser Client="MayWiFin", Device="MayWiFin", DeviceId="maywifin_web", Version="1.0.0"'
+        },
+        body: JSON.stringify({ Username: username, Pw: password })
+    });
+
+    if (!authRes.ok) {
+        throw new Error('Jellyfin login failed');
+    }
+
+    const authData = await authRes.json();
+    return { url, token: authData.AccessToken, userId: authData.User?.Id };
 }
 
 router.get('/:id', async (req, res) => {
@@ -57,13 +89,17 @@ router.get('/:id', async (req, res) => {
     }
 
     // 2. JELLYFIN STREAM
-    const { url, apiKey, userId } = getJellyfinConfig();
-    if (!url || !apiKey || !userId) return res.status(400).send("Jellyfin not configured");
+    let auth;
+    try {
+        auth = await getJellyfinAuth();
+    } catch (err) {
+        return res.status(400).send("Jellyfin not configured");
+    }
 
-    const baseUrl = url.endsWith('/') ? url.slice(0, -1) : url;
+    const baseUrl = auth.url.endsWith('/') ? auth.url.slice(0, -1) : auth.url;
     
     // Construct stream URL
-    let streamUrl = `${baseUrl}/Audio/${trackId}/universal?UserId=${userId}&DeviceId=maywifin_web&api_key=${apiKey}&Container=mp3,aac,flac,webma,webm,wav,ogg`;
+    let streamUrl = `${baseUrl}/Audio/${trackId}/universal?UserId=${auth.userId}&DeviceId=maywifin_web&api_key=${auth.token}&Container=mp3,aac,flac,webma,webm,wav,ogg`;
     
     // If quality is configured (e.g., 320000)
     if (bitrate && bitrate !== 'lossless') {

@@ -79,18 +79,8 @@ setInterval(() => {
 // Auth Routes (no protection - public)
 app.use("/api/auth", require("./routes/auth"));
 
-// Protected Routes (require auth if enabled)
-const { verifyToken } = require("./routes/auth");
-const authMiddleware = (req, res, next) => {
-  const requireAuth = db
-    .prepare("SELECT value FROM settings WHERE key = 'require_auth'")
-    .get()?.value;
-  if (requireAuth === "1") {
-    verifyToken(req, res, next);
-  } else {
-    next();
-  }
-};
+// Temporary: disable app-level auth checks
+const authMiddleware = (_req, _res, next) => next();
 
 // API Routes
 app.use("/api/settings", require("./routes/settings"));

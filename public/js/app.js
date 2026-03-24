@@ -1,11 +1,9 @@
 import { Api, AppState } from "./api.js";
 import { showNowPlayingModal } from "./components/nowplaying-modal.js";
-import { renderUserManagement } from "./pages/admin-users.js";
 import { renderAlbum } from "./pages/album.js";
 import { renderArtist } from "./pages/artist.js";
 import { renderHome } from "./pages/home.js";
 import { renderLibrary } from "./pages/library.js";
-import { renderLogin } from "./pages/login.js";
 import { renderPlaylist } from "./pages/playlist.js";
 import { renderRadio } from "./pages/radio.js";
 import { renderSettings } from "./pages/settings.js";
@@ -90,8 +88,6 @@ appRouter.add("/radio", renderRadio);
 appRouter.add("/playlists", renderPlaylist);
 appRouter.add("/artist/:id", renderArtist);
 appRouter.add("/album/:id", renderAlbum);
-appRouter.add("/login", renderLogin);
-appRouter.add("/admin/users", renderUserManagement);
 
 async function initApp() {
   console.log("Initializing MayWiFin...");
@@ -111,27 +107,7 @@ async function initApp() {
       console.error("Failed to load settings from API", err);
     }
 
-    // Check authentication
-    const requireAuth = AppState.settings.require_auth === "1";
-    const token = Api.getToken();
-
-    if (requireAuth && !token) {
-      window.location.hash = "#/login";
-      return;
-    }
-
-    if (token) {
-      try {
-        AppState.user = await Api.getCurrentUser();
-      } catch (err) {
-        console.error("Failed to fetch current user", err);
-        Api.setToken(null);
-        if (requireAuth) {
-          window.location.hash = "#/login";
-          return;
-        }
-      }
-    }
+    // Temporary mode: authentication disabled
 
     // Always trigger initial route
     appRouter.handleRoute();

@@ -23,8 +23,8 @@ export async function renderSettings(container) {
                 <p class="text-secondary" style="margin-bottom: 16px;">Connexion à votre serveur Jellyfin.</p>
                 <div style="display: flex; flex-direction: column; gap: 12px;">
                     <input type="text" id="setting-jf-url" placeholder="http://192.168.1.10:8096" value="${AppState.settings.source_jellyfin_url || ''}" style="padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--bg-elevated); background: var(--bg-base); color: white;">
-                    <input type="text" id="setting-jf-apikey" placeholder="API Key" value="${AppState.settings.source_jellyfin_apikey || ''}" style="padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--bg-elevated); background: var(--bg-base); color: white;">
-                    <input type="text" id="setting-jf-userid" placeholder="User ID" value="${AppState.settings.source_jellyfin_userid || ''}" style="padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--bg-elevated); background: var(--bg-base); color: white;">
+                    <input type="text" id="setting-jf-username" placeholder="Nom d'utilisateur Jellyfin" value="${AppState.settings.source_jellyfin_username || ''}" style="padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--bg-elevated); background: var(--bg-base); color: white;">
+                    <input type="password" id="setting-jf-password" placeholder="Mot de passe Jellyfin" value="${AppState.settings.source_jellyfin_password || ''}" style="padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--bg-elevated); background: var(--bg-base); color: white;">
                     <button id="btn-save-jf" style="padding: 12px 24px; border-radius: var(--radius-sm); border: none; background: var(--accent); color: var(--bg-base); font-weight: bold; cursor: pointer; align-self: flex-start;">Sauvegarder Jellyfin</button>
                 </div>
             </div>
@@ -75,25 +75,6 @@ export async function renderSettings(container) {
                 <input type="color" id="setting-theme-accent" value="${AppState.settings.theme_accent || '#ffffff'}" style="width: 60px; height: 40px; border: none; border-radius: var(--radius-sm); cursor: pointer;">
             </div>
             </div>
-
-            <div class="settings-section">
-                <h2 class="section-title">Sécurité & Utilisateurs</h2>
-            
-                <div class="setting-item glass-card" style="padding: 24px; margin-bottom: 16px;">
-                    <h3>Authentification Requise</h3>
-                    <p class="text-secondary" style="margin-bottom: 16px;">Obligez les utilisateurs à se connecter pour accéder à MayWiFin.</p>
-                    <label style="display: flex; align-items: center; gap: 12px; cursor: pointer;">
-                        <input type="checkbox" id="setting-require-auth" ${AppState.settings.require_auth === '1' ? 'checked' : ''} style="width: 20px; height: 20px;">
-                        <span>Authentification requise</span>
-                    </label>
-                </div>
-
-                <div class="setting-item glass-card" style="padding: 24px;">
-                    <h3>Gestion des Utilisateurs</h3>
-                    <p class="text-secondary" style="margin-bottom: 16px;">Gérez les utilisateurs et leurs permissions de la plateforme.</p>
-                    <button id="btn-manage-users" style="padding: 12px 24px; border-radius: var(--radius-sm); border: none; background: var(--accent); color: var(--bg-base); font-weight: bold; cursor: pointer;">Gérer les Utilisateurs</button>
-                </div>
-        </div>
     `;
 
     // Event Listeners
@@ -117,14 +98,19 @@ export async function renderSettings(container) {
 
     document.getElementById('btn-save-jf').addEventListener('click', async () => {
         const url = document.getElementById('setting-jf-url').value;
-        const api = document.getElementById('setting-jf-apikey').value;
-        const uid = document.getElementById('setting-jf-userid').value;
+        const username = document.getElementById('setting-jf-username').value;
+        const password = document.getElementById('setting-jf-password').value;
         await Api.saveSetting('source_jellyfin_url', url);
-        await Api.saveSetting('source_jellyfin_apikey', api);
-        await Api.saveSetting('source_jellyfin_userid', uid);
+        await Api.saveSetting('source_jellyfin_username', username);
+        await Api.saveSetting('source_jellyfin_password', password);
+        // clear legacy fields
+        await Api.saveSetting('source_jellyfin_apikey', '');
+        await Api.saveSetting('source_jellyfin_userid', '');
         AppState.settings.source_jellyfin_url = url;
-        AppState.settings.source_jellyfin_apikey = api;
-        AppState.settings.source_jellyfin_userid = uid;
+        AppState.settings.source_jellyfin_username = username;
+        AppState.settings.source_jellyfin_password = password;
+        AppState.settings.source_jellyfin_apikey = '';
+        AppState.settings.source_jellyfin_userid = '';
         alert("Jellyfin Enregistré");
     });
 
@@ -153,18 +139,6 @@ export async function renderSettings(container) {
         const val = e.target.value;
         await Api.saveSetting('auto_scan_interval', val);
         AppState.settings.auto_scan_interval = val;
-    });
-
-    // Auth required
-    document.getElementById('setting-require-auth').addEventListener('change', async (e) => {
-        const val = e.target.checked ? '1' : '0';
-        await Api.saveSetting('require_auth', val);
-        AppState.settings.require_auth = val;
-    });
-
-    // Manage users button
-    document.getElementById('btn-manage-users').addEventListener('click', () => {
-        window.location.hash = '#/admin/users';
     });
 
     // Initialize auto-scan select with saved value
