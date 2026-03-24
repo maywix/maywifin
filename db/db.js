@@ -1,17 +1,17 @@
-const Database = require('better-sqlite3');
-const path = require('path');
-const fs = require('fs');
+const Database = require("better-sqlite3");
+const path = require("path");
+const fs = require("fs");
 
 // Ensure db directory exists
-const dbDir = path.join(__dirname, '..', 'db');
+const dbDir = path.join(__dirname, "..", "db");
 if (!fs.existsSync(dbDir)) {
-    fs.mkdirSync(dbDir, { recursive: true });
+  fs.mkdirSync(dbDir, { recursive: true });
 }
 
-const db = new Database(path.join(dbDir, 'maywifin.sqlite'));
+const db = new Database(path.join(dbDir, "maywifin.sqlite"));
 
 // Enable WAL mode for better performance
-db.pragma('journal_mode = WAL');
+db.pragma("journal_mode = WAL");
 
 // Initialize Schema
 db.exec(`
@@ -31,7 +31,7 @@ db.exec(`
 
     CREATE TABLE IF NOT EXISTS playlists (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT No NULL,
+        name TEXT NOT NULL,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
 
@@ -69,25 +69,29 @@ db.exec(`
 `);
 
 // Seed default settings if empty
-const checkSettings = db.prepare("SELECT count(*) as count FROM settings").get();
+const checkSettings = db
+  .prepare("SELECT count(*) as count FROM settings")
+  .get();
 if (checkSettings.count === 0) {
-    const defaultSettings = [
-        ['source_local', ''],
-        ['source_jellyfin_url', ''],
-        ['source_jellyfin_apikey', ''],
-        ['source_jellyfin_userid', ''],
-        ['theme_accent', '#ffffff'],
-        ['player_crossfade', '0'],
-        ['auto_scan_interval', '0'],
-        ['require_auth', '0']
-    ];
-    
-    const insertSetting = db.prepare("INSERT INTO settings (key, value) VALUES (?, ?)");
-    db.transaction(() => {
-        for (const [k, v] of defaultSettings) {
-            insertSetting.run(k, v);
-        }
-    })();
+  const defaultSettings = [
+    ["source_local", ""],
+    ["source_jellyfin_url", ""],
+    ["source_jellyfin_apikey", ""],
+    ["source_jellyfin_userid", ""],
+    ["theme_accent", "#ffffff"],
+    ["player_crossfade", "0"],
+    ["auto_scan_interval", "0"],
+    ["require_auth", "0"],
+  ];
+
+  const insertSetting = db.prepare(
+    "INSERT INTO settings (key, value) VALUES (?, ?)",
+  );
+  db.transaction(() => {
+    for (const [k, v] of defaultSettings) {
+      insertSetting.run(k, v);
+    }
+  })();
 }
 
 module.exports = db;
