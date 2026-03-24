@@ -4,16 +4,28 @@ const BASE_URL = '/api';
 export const AppState = {
     settings: {},
     library: { artists: {}, albums: {}, tracks: [] },
-    jellyfin: { artists: [], albums: [], tracks: [] }
+        jellyfin: { artists: [], albums: [], tracks: [] },
+        user: null,
+        queue: [],
+        history: []
 };
 
 export const Api = {
+    // Token management
+    getToken: () => localStorage.getItem('auth_token'),
+    setToken: (token) => {
+        if (token) localStorage.setItem('auth_token', token);
+        else localStorage.removeItem('auth_token');
+    },
+
     async request(endpoint, options = {}) {
         try {
+            const token = Api.getToken();
             const res = await fetch(`${BASE_URL}${endpoint}`, {
                 ...options,
                 headers: {
                     'Content-Type': 'application/json',
+                    ...(token && { 'Authorization': `Bearer ${token}` }),
                     ...options.headers
                 }
             });
@@ -56,5 +68,40 @@ export const Api = {
         if (albumName) query.append('album_name', albumName);
         if (duration) query.append('duration', duration);
         return Api.request(`/lyrics?${query.toString()}`);
-    }
+        },
+
+        // Auth
+        register: (username, password) => Api.request('/auth/register', { 
+            method: 'POST', 
+            body: JSON.stringify({ username, password }) 
+        }),
+        login: (username, password) => Api.request('/auth/login', { 
+            method: 'POST', 
+            body: JSON.stringify({ username, password }) 
+        }),
+        getCurrentUser: () => Api.request('/auth/me'),
+        logout: () => Api.setToken(null),
+        getUsers: () => Api.request('/auth/users'),
+        setUserAdmin: (userId, isAdmin) => Api.request(`/auth/users/${userId}/admin`, { 
+            method: 'POST',
+            body: JSON.stringify({ is_admin: isAdmin })
+        }),
+        deleteUser: (userId) => Api.request(`/auth/users/${userId}`, { method: 'DELETE' }),
+
+        // Playback Queue
+        getQueue: () => Api.request('/playback/queue'),
+        addToQueue: (trackId) => Api.request('/playback/queue', { 
+            method: 'POST', 
+            body: JSON.stringify({ track_id: trackId }) 
+        }),
+        removeFromQueue: (id) => Api.request(`/playback/queue/${id}`, { method: 'DELETE' }),
+        clearQueue: () => Api.request('/playback/queue', { method: 'DELETE' }),
+
+        // Playback History
+        getHistory: (limit = 50) => Api.request(`/playback/history?limit=${limit}`),
+        recordPlayback: (trackId) => Api.request('/playback/history', { 
+            method: 'POST', 
+            body: JSON.stringify({ track_id: trackId }) 
+        }),
+        clearHistory: () => Api.request('/playback/history', { method: 'DELETE' })
 };

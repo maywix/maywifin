@@ -13,13 +13,41 @@ class AudioEngine {
         
         this.queue = [];
         this.currentIndex = -1;
-        this.isPlaying = false;
+        this.isPlayingState = false;
+        this.currentTrack = null;
+        this.events = {};
         
         // Setup events
         this.audioElement.addEventListener('timeupdate', () => this.onTimeUpdate());
         this.audioElement.addEventListener('ended', () => this.playNext());
-        this.audioElement.addEventListener('play', () => { this.isPlaying = true; updatePlayerUI(null, true); });
-        this.audioElement.addEventListener('pause', () => { this.isPlaying = false; updatePlayerUI(null, false); });
+        this.audioElement.addEventListener('play', () => { 
+            this.isPlayingState = true; 
+            updatePlayerUI(null, true); 
+            this.emit('play');
+        });
+        this.audioElement.addEventListener('pause', () => { 
+            this.isPlayingState = false; 
+            updatePlayerUI(null, false); 
+            this.emit('pause');
+        });
+    }
+
+    // Event system
+    on(event, callback) {
+        if (!this.events[event]) {
+            this.events[event] = [];
+        }
+        this.events[event].push(callback);
+    }
+
+    emit(event) {
+        if (this.events[event]) {
+            this.events[event].forEach(callback => callback());
+        }
+    }
+
+    isPlaying() {
+        return this.isPlayingState;
     }
 
     init() {
@@ -38,6 +66,7 @@ class AudioEngine {
     async playTrack(track, queueList = null, index = 0) {
         this.init();
         
+        this.currentTrack = track;
         if (queueList) {
             this.queue = queueList;
             this.currentIndex = index;
@@ -61,6 +90,7 @@ class AudioEngine {
             await this.audioElement.play();
             updatePlayerUI(track, true);
             Api.recordPlay(track); // Record playcount silently
+            Api.recordPlayback(track.id).catch(err => console.error("Failed to record playback", err));
             loadLyrics(track); // Fetch and setup lyrics
         } catch (err) {
             console.error("Playback failed:", err);
@@ -70,7 +100,7 @@ class AudioEngine {
 
     togglePlay() {
         if (!this.audioElement.src) return;
-        if (this.isPlaying) {
+        if (this.isPlayingState) {
             this.audioElement.pause();
         } else {
             this.init();
@@ -86,7 +116,7 @@ class AudioEngine {
             // End of queue
             this.audioElement.src = '';
             resetPlayerUI();
-            this.isPlaying = false;
+            this.isPlayingState = false;
         }
     }
 
@@ -97,6 +127,23 @@ class AudioEngine {
             this.currentIndex--;
             this.playTrack(this.queue[this.currentIndex]);
         }
+    }
+
+    // Public next/previous methods
+    next() {
+        this.playNext();
+    }
+
+    previous() {
+        this.playPrev();
+    }
+
+    play() {
+        this.audioElement.play();
+    }
+
+    pause() {
+        this.audioElement.pause();
     }
 
     seek(percent) {

@@ -41,6 +41,31 @@ db.exec(`
         sort_order INTEGER,
         FOREIGN KEY(playlist_id) REFERENCES playlists(id) ON DELETE CASCADE
     );
+
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            is_admin INTEGER DEFAULT 0,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE TABLE IF NOT EXISTS playback_queue (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            track_id TEXT NOT NULL,
+            position INTEGER,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+        );
+
+        CREATE TABLE IF NOT EXISTS playback_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            track_id TEXT NOT NULL,
+            played_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+        );
 `);
 
 // Seed default settings if empty
@@ -52,7 +77,9 @@ if (checkSettings.count === 0) {
         ['source_jellyfin_apikey', ''],
         ['source_jellyfin_userid', ''],
         ['theme_accent', '#ffffff'],
-        ['player_crossfade', '0']
+        ['player_crossfade', '0'],
+        ['auto_scan_interval', '0'],
+        ['require_auth', '0']
     ];
     
     const insertSetting = db.prepare("INSERT INTO settings (key, value) VALUES (?, ?)");

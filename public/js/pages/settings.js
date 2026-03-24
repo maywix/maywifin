@@ -55,12 +55,44 @@ export async function renderSettings(container) {
 
         <div class="settings-section">
             <h2 class="section-title">Personnalisation</h2>
+
+            <div class="setting-item glass-card" style="padding: 24px; margin-bottom: 16px;">
+                <h3>Actualisation Automatique de la Médiathèque</h3>
+                <p class="text-secondary" style="margin-bottom: 16px;">Rescanne automatiquement votre dossier musique à intervalles réguliers.</p>
+                <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 12px;">
+                    <select id="setting-auto-scan" style="padding: 10px 12px; border-radius: var(--radius-sm); border: 1px solid var(--bg-elevated); background: var(--bg-elevated); color: var(--text-primary);">
+                        <option value="0">Désactivé</option>
+                        <option value="3600">Toutes les heures</option>
+                        <option value="21600">Toutes les 6 heures</option>
+                        <option value="86400">Tous les jours</option>
+                    </select>
+                </div>
+            </div>
             
             <div class="setting-item glass-card" style="padding: 24px; margin-bottom: 16px;">
                 <h3>Couleur d'accentuation</h3>
                 <p class="text-secondary" style="margin-bottom: 16px;">Changez la couleur principale de MayWiFin.</p>
                 <input type="color" id="setting-theme-accent" value="${AppState.settings.theme_accent || '#ffffff'}" style="width: 60px; height: 40px; border: none; border-radius: var(--radius-sm); cursor: pointer;">
             </div>
+            </div>
+
+            <div class="settings-section">
+                <h2 class="section-title">Sécurité & Utilisateurs</h2>
+            
+                <div class="setting-item glass-card" style="padding: 24px; margin-bottom: 16px;">
+                    <h3>Authentification Requise</h3>
+                    <p class="text-secondary" style="margin-bottom: 16px;">Obligez les utilisateurs à se connecter pour accéder à MayWiFin.</p>
+                    <label style="display: flex; align-items: center; gap: 12px; cursor: pointer;">
+                        <input type="checkbox" id="setting-require-auth" ${AppState.settings.require_auth === '1' ? 'checked' : ''} style="width: 20px; height: 20px;">
+                        <span>Authentification requise</span>
+                    </label>
+                </div>
+
+                <div class="setting-item glass-card" style="padding: 24px;">
+                    <h3>Gestion des Utilisateurs</h3>
+                    <p class="text-secondary" style="margin-bottom: 16px;">Gérez les utilisateurs et leurs permissions de la plateforme.</p>
+                    <button id="btn-manage-users" style="padding: 12px 24px; border-radius: var(--radius-sm); border: none; background: var(--accent); color: var(--bg-base); font-weight: bold; cursor: pointer;">Gérer les Utilisateurs</button>
+                </div>
         </div>
     `;
 
@@ -114,5 +146,28 @@ export async function renderSettings(container) {
         await Api.saveSetting('theme_accent', val);
         AppState.settings.theme_accent = val;
         document.documentElement.style.setProperty('--accent', val);
+    });
+
+    // Auto-scan
+    document.getElementById('setting-auto-scan').addEventListener('change', async (e) => {
+        const val = e.target.value;
+        await Api.saveSetting('auto_scan_interval', val);
+        AppState.settings.auto_scan_interval = val;
+    });
+
+    // Auth required
+    document.getElementById('setting-require-auth').addEventListener('change', async (e) => {
+        const val = e.target.checked ? '1' : '0';
+        await Api.saveSetting('require_auth', val);
+        AppState.settings.require_auth = val;
+    });
+
+    // Manage users button
+    document.getElementById('btn-manage-users').addEventListener('click', () => {
+        window.location.hash = '#/admin/users';
+    });
+
+    // Initialize auto-scan select with saved value
+    document.getElementById('setting-auto-scan').value = AppState.settings.auto_scan_interval || '0';
     });
 }

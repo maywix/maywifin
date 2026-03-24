@@ -6,6 +6,9 @@ import { renderRadio } from './pages/radio.js';
 import { renderPlaylist } from './pages/playlist.js';
 import { renderArtist } from './pages/artist.js';
 import { renderAlbum } from './pages/album.js';
+import { renderLogin } from './pages/login.js';
+import { renderUserManagement } from './pages/admin-users.js';
+import { showNowPlayingModal } from './components/nowplaying-modal.js';
 import { Player } from './player/player.js'; // Ensure player is loaded
 
 // Simple SPA Router
@@ -80,10 +83,34 @@ appRouter.add('/radio', renderRadio);
 appRouter.add('/playlists', renderPlaylist);
 appRouter.add('/artist/:id', renderArtist);
 appRouter.add('/album/:id', renderAlbum);
+appRouter.add('/login', renderLogin);
+appRouter.add('/admin/users', renderUserManagement);
 
 async function initApp() {
     console.log("Initializing MayWiFin...");
     try {
+        // Check authentication
+        const requireAuth = AppState.settings.require_auth === '1';
+        const token = Api.getToken();
+        
+        if (requireAuth && !token) {
+            window.location.hash = '#/login';
+            return;
+        }
+        
+        if (token) {
+            try {
+                AppState.user = await Api.getCurrentUser();
+            } catch (err) {
+                console.error("Failed to fetch current user", err);
+                Api.setToken(null);
+                if (requireAuth) {
+                    window.location.hash = '#/login';
+                    return;
+                }
+            }
+        }
+
         // Fetch settings but don't block the UI if it fails
         Api.getSettings().then(settings => {
             AppState.settings = settings;
@@ -107,6 +134,13 @@ async function initApp() {
             const panel = document.getElementById('right-panel');
             document.getElementById('panel-title').textContent = "Paroles";
             panel.classList.toggle('hidden');
+        });
+
+        // Now playing modal on cover click
+        document.getElementById('player-cover')?.addEventListener('click', () => {
+            if (Player.currentTrack) {
+                showNowPlayingModal(Player.currentTrack);
+            }
         });
 
     } catch (err) {
