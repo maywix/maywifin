@@ -134,15 +134,35 @@ router.get('/cover/:id', async (req, res) => {
         const decodedPath = Buffer.from(trackId.replace('local_', ''), 'base64').toString('utf-8');
         if (!fs.existsSync(decodedPath)) return res.status(404).send('File missing');
 
+        const trackDir = path.dirname(decodedPath);
+        
+        // List of common cover file names to check
+        const coverNames = ['cover.jpg', 'cover.png', 'cover.jpeg', 'folder.jpg', 'folder.png', 'albumart.jpg', 'albumart.png', 'front.jpg', 'front.png'];
+        
+        // Check for cover files in the album directory
+        for (const coverName of coverNames) {
+            const coverPath = path.join(trackDir, coverName);
+            if (fs.existsSync(coverPath)) {
+                // Serve the cover file
+                res.setHeader('Content-Type', coverName.endsWith('.png') ? 'image/png' : 'image/jpeg');
+                res.setHeader('Cache-Control', 'public, max-age=86400');
+                return res.sendFile(coverPath);
+            }
+        }
+
+        // If no cover file found, try extracting from metadata
         const { parseFile } = await import('music-metadata');
         const metadata = await parseFile(decodedPath);
         
         const picture = metadata.common.picture ? metadata.common.picture[0] : null;
         if (picture) {
             res.header('Content-Type', picture.format);
+            res.header('Cache-Control', 'public, max-age=86400');
             res.send(picture.data);
         } else {
-            res.status(404).sendFile(path.resolve(__dirname, '../public/assets/default-cover.png'));
+            // Fallback to default cover
+            res.setHeader('Cache-Control', 'public, max-age=86400');
+            res.sendFile(path.resolve(__dirname, '../public/assets/default-cover.png'));
         }
     } catch (err) {
         console.error("Cover extraction error:", err);
