@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  maywifin:
+    build: .
+    container_name: maywifin
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+      # Replace /mnt/music with your actual music folder path on the host if using local path
+      # - /path/to/your/music:/music
+    environment:
+      - PORT=3000
+    restart: unless-stopped
