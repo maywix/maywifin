@@ -25,7 +25,7 @@ async function walkDir(dir) {
             results = results.concat(await walkDir(filePath));
         } else {
             // Filter audio files
-            if (filePath.match(/\\.(mp3|flac|wav|m4a|ogg|aac|opus)$/i)) {
+            if (filePath.match(/\.(mp3|flac|wav|m4a|ogg|aac|opus)$/i)) {
                 results.push(filePath);
             }
         }
