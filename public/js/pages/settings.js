@@ -4,7 +4,7 @@ export async function renderSettings(container) {
     const normalizeJellyfinUrl = (rawUrl) => {
         if (!rawUrl) return '';
         let url = rawUrl.trim();
-        url = url.replace(/^https?:\/\/https?:\/\//i, 'http://');
+        url = url.replace(/^(https?):\/\/https?:\/\//i, '$1://');
         if (!/^https?:\/\//i.test(url)) {
             url = `http://${url}`;
         }

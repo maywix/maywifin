@@ -1,59 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../db/db');
-
-function normalizeJellyfinUrl(rawUrl) {
-    if (!rawUrl) return '';
-    let url = rawUrl.trim();
-    url = url.replace(/^https?:\/\/https?:\/\//i, 'http://');
-    if (!/^https?:\/\//i.test(url)) {
-        url = `http://${url}`;
-    }
-    return url;
-}
-
-// Read settings helper
-function getJellyfinConfig() {
-    const rawUrl = db.prepare("SELECT value FROM settings WHERE key = 'source_jellyfin_url'").get()?.value;
-    const apiKey = db.prepare("SELECT value FROM settings WHERE key = 'source_jellyfin_apikey'").get()?.value;
-    const userId = db.prepare("SELECT value FROM settings WHERE key = 'source_jellyfin_userid'").get()?.value;
-    const username = db.prepare("SELECT value FROM settings WHERE key = 'source_jellyfin_username'").get()?.value;
-    const password = db.prepare("SELECT value FROM settings WHERE key = 'source_jellyfin_password'").get()?.value;
-    const url = normalizeJellyfinUrl(rawUrl);
-    return { url, apiKey, userId, username, password };
-}
-
-async function getJellyfinAuth() {
-    const { url, apiKey, userId, username, password } = getJellyfinConfig();
-    if (!url) throw new Error('Jellyfin URL missing');
-
-    // Legacy/fallback mode
-    if (apiKey && userId) {
-        return { url, token: apiKey, userId };
-    }
-
-    // Username/password mode
-    if (!username || !password) {
-        throw new Error('Jellyfin credentials missing');
-    }
-
-    const baseUrl = url.endsWith('/') ? url.slice(0, -1) : url;
-    const authRes = await fetch(`${baseUrl}/Users/AuthenticateByName`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-Emby-Authorization': 'MediaBrowser Client="MayWiFin", Device="MayWiFin", DeviceId="maywifin_web", Version="1.0.0"'
-        },
-        body: JSON.stringify({ Username: username, Pw: password })
-    });
-
-    if (!authRes.ok) {
-        throw new Error('Jellyfin login failed');
-    }
-
-    const authData = await authRes.json();
-    return { url, token: authData.AccessToken, userId: authData.User?.Id };
-}
+const { getJellyfinAuth } = require('./jellyfin-auth');
 
 // Unified proxy helper
 async function proxyJellyfinFallback(endpoint, req, res) {
