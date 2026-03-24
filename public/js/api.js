@@ -63,6 +63,7 @@ export const Api = {
     Api.request(
       albumId ? `/jellyfin/tracks?albumId=${albumId}` : "/jellyfin/tracks",
     ),
+  connectJellyfin: () => Api.request('/jellyfin/connect', { method: 'POST' }),
   scanJellyfinLibrary: () => Api.request('/jellyfin/scan', { method: 'POST' }),
 
   // Playcount

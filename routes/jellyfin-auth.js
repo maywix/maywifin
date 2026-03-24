@@ -49,7 +49,7 @@ async function getJellyfinAuth(forceRefresh = false) {
     }
 
     // Legacy/fallback mode
-    if (apiKey && userId) {
+    if (apiKey && userId && !forceRefresh) {
         return { url, token: apiKey, userId };
     }
 
@@ -92,6 +92,16 @@ async function getJellyfinAuth(forceRefresh = false) {
     }
 
     const authData = await authRes.json();
+    // Persist latest valid token/userId for stability
+    try {
+        db.prepare("INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value")
+            .run('source_jellyfin_apikey', authData.AccessToken || '');
+        db.prepare("INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value")
+            .run('source_jellyfin_userid', authData.User?.Id || '');
+    } catch (_e) {
+        // non-blocking
+    }
+
     authCache = {
         token: authData.AccessToken,
         userId: authData.User?.Id,

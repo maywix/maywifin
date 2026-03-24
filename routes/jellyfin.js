@@ -17,11 +17,26 @@ async function proxyJellyfinFallback(endpoint, req, res) {
 
     try {
         const fetchUrl = `${baseUrl}${path}`;
-        const response = await fetch(fetchUrl, {
+        let response = await fetch(fetchUrl, {
             headers: {
                 'X-Emby-Token': auth.token
             }
         });
+
+        // Retry once with forced refresh if token looks invalid
+        if (response.status === 401) {
+            try {
+                auth = await getJellyfinAuth(true);
+                const retryBaseUrl = auth.url.endsWith('/') ? auth.url.slice(0, -1) : auth.url;
+                response = await fetch(`${retryBaseUrl}${path}`, {
+                    headers: {
+                        'X-Emby-Token': auth.token
+                    }
+                });
+            } catch (_e) {
+                // Let the normal error flow handle this
+            }
+        }
 
         if (!response.ok) {
             throw new Error(`Jellyfin API error: ${response.statusText}`);
@@ -34,6 +49,29 @@ async function proxyJellyfinFallback(endpoint, req, res) {
         res.status(500).json({ error: err.message });
     }
 }
+
+// Explicit connect test / refresh token
+router.post('/connect', async (req, res) => {
+    try {
+        const auth = await getJellyfinAuth(true);
+        const baseUrl = auth.url.endsWith('/') ? auth.url.slice(0, -1) : auth.url;
+
+        const me = await fetch(`${baseUrl}/Users/${auth.userId}`, {
+            headers: {
+                'X-Emby-Token': auth.token
+            }
+        });
+
+        if (!me.ok) {
+            throw new Error('Jellyfin connected but user validation failed');
+        }
+
+        const meData = await me.json().catch(() => ({}));
+        return res.json({ success: true, message: 'Connexion Jellyfin réussie', user: meData?.Name || null });
+    } catch (err) {
+        return res.status(400).json({ error: err.message || 'Connexion Jellyfin échouée' });
+    }
+});
 
 // Proxies
 router.get('/artists', (req, res) => {

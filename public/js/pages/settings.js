@@ -37,6 +37,7 @@ export async function renderSettings(container) {
                     <input type="password" id="setting-jf-password" placeholder="Mot de passe Jellyfin" value="${AppState.settings.source_jellyfin_password || ''}" style="padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--bg-elevated); background: var(--bg-base); color: white;">
                     <div style="display:flex; gap:12px; align-items:center;">
                         <button id="btn-save-jf" style="padding: 12px 24px; border-radius: var(--radius-sm); border: none; background: var(--accent); color: var(--bg-base); font-weight: bold; cursor: pointer;">Sauvegarder Jellyfin</button>
+                        <button id="btn-connect-jf" style="padding: 12px 24px; border-radius: var(--radius-sm); border: 1px solid var(--accent); background: transparent; color: var(--accent); font-weight: bold; cursor: pointer;">Tester Connexion</button>
                         <button id="btn-scan-jf" style="padding: 12px 24px; border-radius: var(--radius-sm); border: 1px solid var(--accent); background: transparent; color: var(--accent); font-weight: bold; cursor: pointer;">Scanner Jellyfin</button>
                     </div>
                     <div id="scan-jf-status" style="font-size: 14px; color: var(--accent);"></div>
@@ -126,6 +127,26 @@ export async function renderSettings(container) {
         AppState.settings.source_jellyfin_apikey = '';
         AppState.settings.source_jellyfin_userid = '';
         alert("Jellyfin Enregistré");
+    });
+
+    document.getElementById('btn-connect-jf').addEventListener('click', async () => {
+        const statusEl = document.getElementById('scan-jf-status');
+        try {
+            statusEl.textContent = 'Test de connexion Jellyfin...';
+
+            // Save latest form values first
+            const url = normalizeJellyfinUrl(document.getElementById('setting-jf-url').value);
+            const username = document.getElementById('setting-jf-username').value;
+            const password = document.getElementById('setting-jf-password').value;
+            await Api.saveSetting('source_jellyfin_url', url);
+            await Api.saveSetting('source_jellyfin_username', username);
+            await Api.saveSetting('source_jellyfin_password', password);
+
+            const result = await Api.connectJellyfin();
+            statusEl.textContent = result.message || 'Connexion Jellyfin réussie';
+        } catch (e) {
+            statusEl.textContent = 'Erreur: ' + e.message;
+        }
     });
 
     document.getElementById('btn-scan-jf').addEventListener('click', async () => {
