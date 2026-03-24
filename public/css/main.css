@@ -71,6 +71,7 @@ body {
     display: flex;
     flex-direction: column;
     padding: 24px 16px;
+    padding-bottom: calc(var(--player-height) + 24px); /* Space for player bar overlay */
     z-index: 10;
 }
 

@@ -1,6 +1,12 @@
 // API Client Helper
 const BASE_URL = '/api';
 
+export const AppState = {
+    settings: {},
+    library: { artists: {}, albums: {}, tracks: [] },
+    jellyfin: { artists: [], albums: [], tracks: [] }
+};
+
 export const Api = {
     async request(endpoint, options = {}) {
         try {

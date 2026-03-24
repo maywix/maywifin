@@ -1,7 +1,11 @@
-import { Api } from './api.js';
+import { Api, AppState } from './api.js';
 import { renderHome } from './pages/home.js';
 import { renderLibrary } from './pages/library.js';
 import { renderSettings } from './pages/settings.js';
+import { renderRadio } from './pages/radio.js';
+import { renderPlaylist } from './pages/playlist.js';
+import { renderArtist } from './pages/artist.js';
+import { renderAlbum } from './pages/album.js';
 
 // Simple SPA Router
 class Router {
@@ -64,7 +68,7 @@ class Router {
                 this.container.firstElementChild?.classList.add('fade-in');
             } catch (err) {
                 console.error("Route render error:", err);
-                this.container.innerHTML = `<div class="error-msg">Failed to load view: ${err.message}</div>`;
+                this.container.innerHTML = \`<div class="error-msg">Failed to load view: \${err.message}</div>\`;
             }
         } else {
             this.container.innerHTML = '<h2>404 - Page non trouvée / En construction</h2>';
@@ -75,11 +79,6 @@ class Router {
 export const appRouter = new Router();
 
 // Register Routes
-import { renderRadio } from './pages/radio.js';
-import { renderPlaylist } from './pages/playlist.js';
-import { renderArtist } from './pages/artist.js';
-import { renderAlbum } from './pages/album.js';
-
 appRouter.add('/', renderHome);
 appRouter.add('/library', renderLibrary);
 appRouter.add('/settings', renderSettings);
@@ -87,13 +86,6 @@ appRouter.add('/radio', renderRadio);
 appRouter.add('/playlists', renderPlaylist);
 appRouter.add('/artist/:id', renderArtist);
 appRouter.add('/album/:id', renderAlbum);
-
-// Global App State & Init
-export const AppState = {
-    settings: {},
-    library: { artists: {}, albums: {}, tracks: [] },
-    jellyfin: { artists: [], albums: [], tracks: [] }
-};
 
 async function initApp() {
     try {
