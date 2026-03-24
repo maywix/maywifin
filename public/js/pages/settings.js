@@ -1,6 +1,16 @@
 import { Api, AppState } from '../api.js';
 
 export async function renderSettings(container) {
+    const normalizeJellyfinUrl = (rawUrl) => {
+        if (!rawUrl) return '';
+        let url = rawUrl.trim();
+        url = url.replace(/^https?:\/\/https?:\/\//i, 'http://');
+        if (!/^https?:\/\//i.test(url)) {
+            url = `http://${url}`;
+        }
+        return url;
+    };
+
     container.innerHTML = `
         <h1 class="page-title">Settings</h1>
         
@@ -25,7 +35,11 @@ export async function renderSettings(container) {
                     <input type="text" id="setting-jf-url" placeholder="http://192.168.1.10:8096" value="${AppState.settings.source_jellyfin_url || ''}" style="padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--bg-elevated); background: var(--bg-base); color: white;">
                     <input type="text" id="setting-jf-username" placeholder="Nom d'utilisateur Jellyfin" value="${AppState.settings.source_jellyfin_username || ''}" style="padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--bg-elevated); background: var(--bg-base); color: white;">
                     <input type="password" id="setting-jf-password" placeholder="Mot de passe Jellyfin" value="${AppState.settings.source_jellyfin_password || ''}" style="padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--bg-elevated); background: var(--bg-base); color: white;">
-                    <button id="btn-save-jf" style="padding: 12px 24px; border-radius: var(--radius-sm); border: none; background: var(--accent); color: var(--bg-base); font-weight: bold; cursor: pointer; align-self: flex-start;">Sauvegarder Jellyfin</button>
+                    <div style="display:flex; gap:12px; align-items:center;">
+                        <button id="btn-save-jf" style="padding: 12px 24px; border-radius: var(--radius-sm); border: none; background: var(--accent); color: var(--bg-base); font-weight: bold; cursor: pointer;">Sauvegarder Jellyfin</button>
+                        <button id="btn-scan-jf" style="padding: 12px 24px; border-radius: var(--radius-sm); border: 1px solid var(--accent); background: transparent; color: var(--accent); font-weight: bold; cursor: pointer;">Scanner Jellyfin</button>
+                    </div>
+                    <div id="scan-jf-status" style="font-size: 14px; color: var(--accent);"></div>
                 </div>
             </div>
         </div>
@@ -97,7 +111,7 @@ export async function renderSettings(container) {
     });
 
     document.getElementById('btn-save-jf').addEventListener('click', async () => {
-        const url = document.getElementById('setting-jf-url').value;
+        const url = normalizeJellyfinUrl(document.getElementById('setting-jf-url').value);
         const username = document.getElementById('setting-jf-username').value;
         const password = document.getElementById('setting-jf-password').value;
         await Api.saveSetting('source_jellyfin_url', url);
@@ -112,6 +126,17 @@ export async function renderSettings(container) {
         AppState.settings.source_jellyfin_apikey = '';
         AppState.settings.source_jellyfin_userid = '';
         alert("Jellyfin Enregistré");
+    });
+
+    document.getElementById('btn-scan-jf').addEventListener('click', async () => {
+        const statusEl = document.getElementById('scan-jf-status');
+        try {
+            statusEl.textContent = 'Scan Jellyfin en cours...';
+            const res = await Api.scanJellyfinLibrary();
+            statusEl.textContent = res.message || 'Scan Jellyfin déclenché.';
+        } catch (e) {
+            statusEl.textContent = 'Erreur: ' + e.message;
+        }
     });
 
     // Instant save for checkboxes and ranges

@@ -4,12 +4,23 @@ const fs = require('fs');
 const path = require('path');
 const db = require('../db/db');
 
+function normalizeJellyfinUrl(rawUrl) {
+    if (!rawUrl) return '';
+    let url = rawUrl.trim();
+    url = url.replace(/^https?:\/\/https?:\/\//i, 'http://');
+    if (!/^https?:\/\//i.test(url)) {
+        url = `http://${url}`;
+    }
+    return url;
+}
+
 function getJellyfinConfig() {
-    const url = db.prepare("SELECT value FROM settings WHERE key = 'source_jellyfin_url'").get()?.value;
+    const rawUrl = db.prepare("SELECT value FROM settings WHERE key = 'source_jellyfin_url'").get()?.value;
     const apiKey = db.prepare("SELECT value FROM settings WHERE key = 'source_jellyfin_apikey'").get()?.value;
     const userId = db.prepare("SELECT value FROM settings WHERE key = 'source_jellyfin_userid'").get()?.value;
     const username = db.prepare("SELECT value FROM settings WHERE key = 'source_jellyfin_username'").get()?.value;
     const password = db.prepare("SELECT value FROM settings WHERE key = 'source_jellyfin_password'").get()?.value;
+    const url = normalizeJellyfinUrl(rawUrl);
     return { url, apiKey, userId, username, password };
 }
 

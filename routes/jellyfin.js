@@ -2,13 +2,24 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db/db');
 
+function normalizeJellyfinUrl(rawUrl) {
+    if (!rawUrl) return '';
+    let url = rawUrl.trim();
+    url = url.replace(/^https?:\/\/https?:\/\//i, 'http://');
+    if (!/^https?:\/\//i.test(url)) {
+        url = `http://${url}`;
+    }
+    return url;
+}
+
 // Read settings helper
 function getJellyfinConfig() {
-    const url = db.prepare("SELECT value FROM settings WHERE key = 'source_jellyfin_url'").get()?.value;
+    const rawUrl = db.prepare("SELECT value FROM settings WHERE key = 'source_jellyfin_url'").get()?.value;
     const apiKey = db.prepare("SELECT value FROM settings WHERE key = 'source_jellyfin_apikey'").get()?.value;
     const userId = db.prepare("SELECT value FROM settings WHERE key = 'source_jellyfin_userid'").get()?.value;
     const username = db.prepare("SELECT value FROM settings WHERE key = 'source_jellyfin_username'").get()?.value;
     const password = db.prepare("SELECT value FROM settings WHERE key = 'source_jellyfin_password'").get()?.value;
+    const url = normalizeJellyfinUrl(rawUrl);
     return { url, apiKey, userId, username, password };
 }
 
@@ -104,6 +115,44 @@ router.get('/tracks', (req, res) => {
             proxyJellyfinFallback(endpoint, req, res);
         })
         .catch((err) => res.status(400).json({ error: err.message }));
+});
+
+// Trigger Jellyfin library refresh scan
+router.post('/scan', async (req, res) => {
+    let auth;
+    try {
+        auth = await getJellyfinAuth();
+    } catch (err) {
+        return res.status(400).json({ error: err.message });
+    }
+
+    const baseUrl = auth.url.endsWith('/') ? auth.url.slice(0, -1) : auth.url;
+
+    try {
+        const refreshRes = await fetch(`${baseUrl}/Library/Refresh`, {
+            method: 'POST',
+            headers: {
+                'X-Emby-Token': auth.token,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                Recursive: true,
+                ImageRefreshMode: 'Default',
+                MetadataRefreshMode: 'Default',
+                ReplaceAllImages: false,
+                ReplaceAllMetadata: false
+            })
+        });
+
+        if (!refreshRes.ok) {
+            const detail = await refreshRes.text().catch(() => '');
+            throw new Error(detail || `Jellyfin refresh failed (${refreshRes.status})`);
+        }
+
+        return res.json({ success: true, message: 'Scan Jellyfin déclenché' });
+    } catch (err) {
+        return res.status(500).json({ error: err.message });
+    }
 });
 
 // Image cover proxy (returns raw image)
