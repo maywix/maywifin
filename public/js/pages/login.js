@@ -66,8 +66,22 @@ export async function renderLogin(container) {
 
     container.innerHTML = html;
 
+    let publicStatus = { allowPublicRegistration: true };
+    try {
+        publicStatus = await Api.getAuthPublicStatus();
+    } catch (err) {
+        console.error('Failed loading public auth status', err);
+    }
+
+    if (!publicStatus.allowPublicRegistration) {
+        document.getElementById('toggle-register').closest('p').innerHTML =
+            '<span style="color: var(--text-secondary);">Création de compte désactivée (admin requis)</span>';
+        document.getElementById('register-form').style.display = 'none';
+    }
+
     // Toggle between login and register
     document.getElementById('toggle-register').addEventListener('click', (e) => {
+        if (!publicStatus.allowPublicRegistration) return;
         e.preventDefault();
         document.getElementById('login-form').style.display = 'none';
         document.getElementById('register-form').style.display = 'block';

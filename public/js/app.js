@@ -96,6 +96,21 @@ appRouter.add("/admin/users", renderUserManagement);
 async function initApp() {
   console.log("Initializing MayWiFin...");
   try {
+    // Load settings first (required to know auth mode)
+    try {
+      const settings = await Api.getSettings();
+      AppState.settings = settings;
+      if (settings.theme_accent) {
+        document.documentElement.style.setProperty(
+          "--accent",
+          settings.theme_accent,
+        );
+      }
+      console.log("Settings loaded.");
+    } catch (err) {
+      console.error("Failed to load settings from API", err);
+    }
+
     // Check authentication
     const requireAuth = AppState.settings.require_auth === "1";
     const token = Api.getToken();
@@ -117,22 +132,6 @@ async function initApp() {
         }
       }
     }
-
-    // Fetch settings but don't block the UI if it fails
-    Api.getSettings()
-      .then((settings) => {
-        AppState.settings = settings;
-        if (settings.theme_accent) {
-          document.documentElement.style.setProperty(
-            "--accent",
-            settings.theme_accent,
-          );
-        }
-        console.log("Settings loaded.");
-      })
-      .catch((err) => {
-        console.error("Failed to load settings from API", err);
-      });
 
     // Always trigger initial route
     appRouter.handleRoute();

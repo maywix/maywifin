@@ -103,6 +103,7 @@ export const Api = {
       body: JSON.stringify({ username, password }),
     }),
   getCurrentUser: () => Api.request("/auth/me"),
+  getAuthPublicStatus: () => Api.request("/auth/public-status"),
   logout: () => Api.setToken(null),
   getUsers: () => Api.request("/auth/users"),
   setUserAdmin: (userId, isAdmin) =>

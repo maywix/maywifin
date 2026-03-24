@@ -50,6 +50,22 @@ function verifyToken(req, res, next) {
     }
 }
 
+// Public status for login UI
+router.get('/public-status', (req, res) => {
+    try {
+        const usersCount = db.prepare("SELECT count(*) as count FROM users").get().count;
+        const requireAuth = db.prepare("SELECT value FROM settings WHERE key = 'require_auth'").get()?.value === '1';
+        res.json({
+            usersCount,
+            hasUsers: usersCount > 0,
+            allowPublicRegistration: usersCount === 0,
+            requireAuth
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // Register
 router.post('/register', (req, res) => {
     const { username, password } = req.body;
@@ -63,6 +79,32 @@ router.post('/register', (req, res) => {
     }
 
     try {
+        const totalUsers = db.prepare("SELECT count(*) as count FROM users").get().count;
+
+        // If users already exist, registration is admin-only
+        if (totalUsers > 0) {
+            const token = req.headers.authorization?.split(' ')[1];
+            if (!token) {
+                return res.status(403).json({ error: "Admin required to create additional users" });
+            }
+
+            const [header, payload, signature] = token.split('.');
+            const verify = crypto.createHmac('sha256', process.env.JWT_SECRET || 'your-secret-key').update(`${header}.${payload}`).digest('base64url');
+            if (verify !== signature) {
+                return res.status(401).json({ error: "Invalid token" });
+            }
+
+            const decoded = JSON.parse(Buffer.from(payload, 'base64url').toString());
+            if (decoded.exp < Math.floor(Date.now() / 1000)) {
+                return res.status(401).json({ error: "Token expired" });
+            }
+
+            const creator = db.prepare("SELECT is_admin FROM users WHERE id = ?").get(decoded.userId);
+            if (!creator?.is_admin) {
+                return res.status(403).json({ error: "Admin required to create additional users" });
+            }
+        }
+
         // Check if user already exists
         const existing = db.prepare("SELECT id FROM users WHERE username = ?").get(username);
         if (existing) {

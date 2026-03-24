@@ -94,12 +94,12 @@ const authMiddleware = (req, res, next) => {
 
 // API Routes
 app.use("/api/settings", require("./routes/settings"));
-app.use("/api/lyrics", require("./routes/lyrics"));
-app.use("/api/library", require("./routes/library"));
-app.use("/api/jellyfin", require("./routes/jellyfin"));
-app.use("/api/stream", require("./routes/stream"));
+app.use("/api/lyrics", authMiddleware, require("./routes/lyrics"));
+app.use("/api/library", authMiddleware, require("./routes/library"));
+app.use("/api/jellyfin", authMiddleware, require("./routes/jellyfin"));
+app.use("/api/stream", authMiddleware, require("./routes/stream"));
 app.use("/api/playcount", authMiddleware, require("./routes/playcount"));
-app.use("/api/playback", require("./routes/playback"));
+app.use("/api/playback", authMiddleware, require("./routes/playback"));
 
 // Serve frontend for any other route (SPA fallback)
 app.get("*", (req, res) => {

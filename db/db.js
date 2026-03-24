@@ -1,6 +1,7 @@
 const Database = require("better-sqlite3");
 const path = require("path");
 const fs = require("fs");
+const crypto = require("crypto");
 
 // Ensure db directory exists
 const dbDir = path.join(__dirname, "..", "db");
@@ -68,30 +69,54 @@ db.exec(`
         );
 `);
 
-// Seed default settings if empty
-const checkSettings = db
-  .prepare("SELECT count(*) as count FROM settings")
-  .get();
-if (checkSettings.count === 0) {
-  const defaultSettings = [
-    ["source_local", ""],
-    ["source_jellyfin_url", ""],
-    ["source_jellyfin_apikey", ""],
-    ["source_jellyfin_userid", ""],
-    ["theme_accent", "#ffffff"],
-    ["player_crossfade", "0"],
-    ["auto_scan_interval", "0"],
-    ["require_auth", "0"],
-  ];
+function hashPassword(password) {
+  const salt = crypto.randomBytes(16).toString("hex");
+  const hash = crypto
+    .pbkdf2Sync(password, salt, 1000, 64, "sha256")
+    .toString("hex");
+  return `${salt}:${hash}`;
+}
 
-  const insertSetting = db.prepare(
-    "INSERT INTO settings (key, value) VALUES (?, ?)",
+// Ensure default settings exist (also for upgraded installations)
+const defaultSettings = [
+  ["source_local", ""],
+  ["source_jellyfin_url", ""],
+  ["source_jellyfin_apikey", ""],
+  ["source_jellyfin_userid", ""],
+  ["theme_accent", "#ffffff"],
+  ["player_crossfade", "0"],
+  ["auto_scan_interval", "0"],
+  ["require_auth", "1"],
+];
+
+const upsertSetting = db.prepare(
+  "INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO NOTHING",
+);
+
+db.transaction(() => {
+  for (const [k, v] of defaultSettings) {
+    upsertSetting.run(k, v);
+  }
+})();
+
+// Bootstrap default admin if no users exist
+const usersCount = db.prepare("SELECT count(*) as count FROM users").get().count;
+if (usersCount === 0) {
+  const defaultAdminUser = process.env.DEFAULT_ADMIN_USER || "admin";
+  const defaultAdminPass = process.env.DEFAULT_ADMIN_PASSWORD || "admin123";
+  const passwordHash = hashPassword(defaultAdminPass);
+
+  db.prepare(
+    "INSERT INTO users (username, password_hash, is_admin) VALUES (?, ?, 1)",
+  ).run(defaultAdminUser, passwordHash);
+
+  db.prepare(
+    "UPDATE settings SET value = '1' WHERE key = 'require_auth'",
+  ).run();
+
+  console.log(
+    `🔐 Default admin created -> username: ${defaultAdminUser} | password: ${defaultAdminPass}`,
   );
-  db.transaction(() => {
-    for (const [k, v] of defaultSettings) {
-      insertSetting.run(k, v);
-    }
-  })();
 }
 
 module.exports = db;
