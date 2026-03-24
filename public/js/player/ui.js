@@ -51,7 +51,10 @@ function updateBackdropAndAccentColor(imgElement) {
 export function updatePlayerUI(track, isPlaying) {
     if (track) {
         document.getElementById('player-title').textContent = track.title;
-        document.getElementById('player-artist').textContent = track.artist;
+        
+        // Add Artist Link
+        const artistEl = document.getElementById('player-artist');
+        artistEl.innerHTML = `<a href="#/artist/${encodeURIComponent(track.artist)}" style="color: inherit; text-decoration: none;" class="hover-underline">${track.artist}</a>`;
         
         let coverUrl = '/assets/default-cover.png';
         if (track.type === 'local') {
@@ -82,6 +85,15 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const seekBar = document.getElementById('seek-bar');
     seekBar.addEventListener('input', (e) => Player.seek(e.target.value));
+
+    // Rate / Speed Logic
+    const rateBar = document.getElementById('rate-bar');
+    const speedDisplay = document.getElementById('speed-display');
+    rateBar.addEventListener('input', (e) => {
+        const rate = parseFloat(e.target.value);
+        speedDisplay.textContent = `${rate.toFixed(1)}x`;
+        Player.setRate(rate);
+    });
 
     const volBar = document.getElementById('volume-bar');
     volBar.addEventListener('input', (e) => {

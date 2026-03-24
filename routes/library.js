@@ -131,20 +131,21 @@ router.get('/cover/:id', async (req, res) => {
     if (!trackId.startsWith('local_')) return res.status(404).send('Not local');
     
     try {
-        const filePath = Buffer.from(trackId.replace('local_', ''), 'base64').toString('utf-8');
-        if (!fs.existsSync(filePath)) return res.status(404).send('File missing');
+        const decodedPath = Buffer.from(trackId.replace('local_', ''), 'base64').toString('utf-8');
+        if (!fs.existsSync(decodedPath)) return res.status(404).send('File missing');
 
-        const mm = await import('music-metadata');
-        const metadata = await mm.parseFile(filePath, { skipCovers: false });
+        const { parseFile } = await import('music-metadata');
+        const metadata = await parseFile(decodedPath);
         
         const picture = metadata.common.picture ? metadata.common.picture[0] : null;
         if (picture) {
             res.header('Content-Type', picture.format);
             res.send(picture.data);
         } else {
-            res.status(404).sendFile(path.join(__dirname, '..', 'public', 'assets', 'default-cover.png'));
+            res.status(404).sendFile(path.resolve(__dirname, '../public/assets/default-cover.png'));
         }
     } catch (err) {
+        console.error("Cover extraction error:", err);
         res.status(500).send('Error extracting cover');
     }
 });

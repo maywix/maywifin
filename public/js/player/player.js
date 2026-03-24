@@ -112,6 +112,13 @@ class AudioEngine {
         }
     }
 
+    setRate(rate) {
+        if (this.audioElement) {
+            this.audioElement.playbackRate = rate;
+            this.audioElement.preservesPitch = false; // "Slowed" effect
+        }
+    }
+
     onTimeUpdate() {
         if (!this.audioElement.duration || isNaN(this.audioElement.duration)) return;
         updateProgress(this.audioElement.currentTime, this.audioElement.duration);

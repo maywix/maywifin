@@ -43,17 +43,17 @@ export async function renderLibrary(container) {
         let gridHtml = '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 24px;">';
         artistNames.forEach(name => {
             const artist = artists[name];
-            // Get first track of first album for an artist cover
             let coverUrl = '/assets/default-cover.png';
             if (artist.albums.length > 0 && albums[artist.albums[0]] && albums[artist.albums[0]].tracks.length > 0) {
                 coverUrl = `/api/library/cover/${albums[artist.albums[0]].tracks[0]}`;
             }
 
             gridHtml += `
-                <div class="glass-card artist-card" style="text-align: center; border-radius: var(--radius-full); padding: 16px;">
-                    <img src="${coverUrl}" style="width: 100%; aspect-ratio: 1; border-radius: 50%; object-fit: cover; margin-bottom: 16px; box-shadow: 0 8px 16px rgba(0,0,0,0.4);">
-                    <h3 style="font-size: 16px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${name}</h3>
-                </div>
+                <a href="#/artist/${encodeURIComponent(name)}" class="glass-card artist-card" style="text-align: center; padding: 24px; text-decoration: none; color: inherit;">
+                    <img src="${coverUrl}" style="width: 100%; aspect-ratio: 1; border-radius: 50%; object-fit: cover; margin-bottom: 16px; box-shadow: 0 12px 24px rgba(0,0,0,0.5);">
+                    <h3 style="font-size: 16px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${name}</h3>
+                    <p class="text-secondary" style="font-size: 13px; margin-top: 4px;">Artiste</p>
+                </a>
             `;
         });
         gridHtml += '</div>';
@@ -70,13 +70,13 @@ export async function renderLibrary(container) {
             let coverUrl = album.tracks.length > 0 ? `/api/library/cover/${album.tracks[0]}` : '/assets/default-cover.png';
 
             gridHtml += `
-                <div class="glass-card album-card" style="padding: 0;">
+                <a href="#/album/${encodeURIComponent(name)}" class="glass-card album-card" style="padding: 0; text-decoration: none; color: inherit;">
                     <img src="${coverUrl}" style="width: 100%; aspect-ratio: 1; object-fit: cover;">
                     <div style="padding: 16px;">
-                        <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${name}</h3>
+                        <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${name}</h3>
                         <p class="text-secondary" style="font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${album.artist}</p>
                     </div>
-                </div>
+                </a>
             `;
         });
         gridHtml += '</div>';
@@ -86,33 +86,43 @@ export async function renderLibrary(container) {
     function renderTracks() {
         if (tracks.length === 0) return tabContent.innerHTML = '<p class="text-muted">Aucune piste trouvée.</p>';
         
-        // Render as a generic list
-        let listHtml = '<div style="display: flex; flex-direction: column; gap: 8px;">';
+        let listHtml = '<div style="display: flex; flex-direction: column; gap: 4px;">';
         tracks.forEach((track, index) => {
             const m = Math.floor(track.duration / 60);
             const s = Math.floor(track.duration % 60).toString().padStart(2, '0');
             
             listHtml += `
-                <div class="track-row play-track-row" data-index="${index}" style="display: flex; align-items: center; padding: 12px 16px; border-radius: var(--radius-sm); transition: background 0.2s; cursor: pointer;">
+                <div class="track-row play-track-row" data-index="${index}" style="display: flex; align-items: center; padding: 10px 16px; border-radius: var(--radius-sm); cursor: pointer; gap: 16px;">
+                    <span class="material-symbols-rounded text-muted" style="font-size: 20px;">play_arrow</span>
                     <div style="flex: 1; display: flex; flex-direction: column;">
                         <span style="font-weight: 500;">${track.title}</span>
                         <span class="text-secondary" style="font-size: 13px;">${track.artist} • ${track.album}</span>
                     </div>
-                    <span class="text-muted" style="font-variant-numeric: tabular-nums;">${m}:${s}</span>
+                    <button class="icon-btn btn-like-track" style="color: var(--text-muted); padding: 8px;"><span class="material-symbols-rounded" style="font-size: 20px;">favorite</span></button>
+                    <span class="text-muted" style="font-variant-numeric: tabular-nums; width: 50px; text-align: right;">${m}:${s}</span>
                 </div>
             `;
         });
         listHtml += '</div>';
         tabContent.innerHTML = listHtml;
 
-        // Hover effect via CSS (add to main if missing, doing inline here for simplicity)
-        tabContent.querySelectorAll('.track-row').forEach(row => {
-            row.addEventListener('mouseenter', () => row.style.backgroundColor = 'var(--bg-elevated)');
-            row.addEventListener('mouseleave', () => row.style.backgroundColor = 'transparent');
-            
-            row.addEventListener('click', () => {
+        // Hover effect & Play
+        tabContent.querySelectorAll('.play-track-row').forEach(row => {
+            row.addEventListener('click', (e) => {
+                // Ignore if clicked the like button specifically
+                if (e.target.closest('.btn-like-track')) return;
+
                 const idx = parseInt(row.dataset.index);
                 Player.playTrack(tracks[idx], tracks, idx);
+            });
+        });
+
+        // Bind Like Buttons
+        tabContent.querySelectorAll('.btn-like-track').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                btn.classList.toggle('btn-like-active');
+                // TODO: Save to DB
             });
         });
     }

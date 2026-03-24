@@ -87,6 +87,12 @@
 
         <!-- Right Side Controls -->
         <div class="extra-controls">
+            <!-- Speed Selector (Slowed/Sped) -->
+            <div class="player-speed-control">
+                <span class="label" id="speed-display">1.0x</span>
+                <input type="range" id="rate-bar" style="width: 60px; height: 4px;" value="1.0" min="0.5" max="2.0" step="0.05">
+            </div>
+
             <!-- Quality Selector -->
             <div class="quality-selector">
                 <select id="stream-quality" class="invisible-select">
