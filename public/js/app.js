@@ -6,12 +6,12 @@ import { renderRadio } from './pages/radio.js';
 import { renderPlaylist } from './pages/playlist.js';
 import { renderArtist } from './pages/artist.js';
 import { renderAlbum } from './pages/album.js';
+import { Player } from './player/player.js'; // Ensure player is loaded
 
 // Simple SPA Router
 class Router {
     constructor() {
         this.routes = {};
-        this.currentPath = '';
         this.container = document.getElementById('main-content');
         this.navLinks = document.querySelectorAll('.nav-btn');
 
@@ -23,24 +23,18 @@ class Router {
     }
 
     async handleRoute() {
-        if (!window.location.hash) {
-            window.location.hash = '/';
-            return;
-        }
-
-        const hash = window.location.hash.substring(1);
-        const parts = hash.split('?');
-        const path = parts[0];
+        const hash = window.location.hash || '#/';
+        const path = hash.substring(1).split('?')[0];
         
         let matchedRoute = this.routes[path];
         let params = {};
         
+        // Dynamic route matching (e.g. /artist/:id)
         if (!matchedRoute) {
             for (const routePath in this.routes) {
                 if (routePath.includes(':')) {
                     const routeParts = routePath.split('/');
                     const pathParts = path.split('/');
-                    
                     if (routeParts.length === pathParts.length && routeParts[1] === pathParts[1]) {
                         matchedRoute = this.routes[routePath];
                         params.id = pathParts[2];
@@ -50,11 +44,10 @@ class Router {
             }
         }
 
-        this.currentPath = path;
-
+        // Active link highlighting
         this.navLinks.forEach(link => {
-            if (path.startsWith(link.getAttribute('data-route')) && link.getAttribute('data-route') !== '/' ||
-                (path === '/' && link.getAttribute('data-route') === '/')) {
+            const linkRoute = link.getAttribute('data-route');
+            if ((path === linkRoute) || (linkRoute !== '/' && path.startsWith(linkRoute))) {
                 link.classList.add('active');
             } else {
                 link.classList.remove('active');
@@ -68,10 +61,11 @@ class Router {
                 this.container.firstElementChild?.classList.add('fade-in');
             } catch (err) {
                 console.error("Route render error:", err);
-                this.container.innerHTML = \`<div class="error-msg">Failed to load view: \${err.message}</div>\`;
+                this.container.innerHTML = `<div class="error-msg" style="padding: 20px; color: #ff5555;">Erreur de chargement de la page: ${err.message}</div>`;
             }
         } else {
-            this.container.innerHTML = '<h2>404 - Page non trouvée / En construction</h2>';
+            console.warn("Route not found:", path);
+            this.container.innerHTML = '<h2>404 - Page non trouvée</h2>';
         }
     }
 }
@@ -88,28 +82,42 @@ appRouter.add('/artist/:id', renderArtist);
 appRouter.add('/album/:id', renderAlbum);
 
 async function initApp() {
+    console.log("Initializing MayWiFin...");
     try {
-        AppState.settings = await Api.getSettings();
-        
-        if (AppState.settings.theme_accent) {
-            document.documentElement.style.setProperty('--accent', AppState.settings.theme_accent);
-        }
+        // Fetch settings but don't block the UI if it fails
+        Api.getSettings().then(settings => {
+            AppState.settings = settings;
+            if (settings.theme_accent) {
+                document.documentElement.style.setProperty('--accent', settings.theme_accent);
+            }
+            console.log("Settings loaded.");
+        }).catch(err => {
+            console.error("Failed to load settings from API", err);
+        });
 
+        // Always trigger initial route
         appRouter.handleRoute();
 
-        document.getElementById('close-panel').addEventListener('click', () => {
+        // UI Event bindings (moved from individual scripts to ensure they exist)
+        document.getElementById('close-panel')?.addEventListener('click', () => {
              document.getElementById('right-panel').classList.add('hidden');
         });
 
-        document.getElementById('btn-lyrics').addEventListener('click', () => {
+        document.getElementById('btn-lyrics')?.addEventListener('click', () => {
             const panel = document.getElementById('right-panel');
             document.getElementById('panel-title').textContent = "Paroles";
             panel.classList.toggle('hidden');
         });
 
     } catch (err) {
-        console.error("App init failed:", err);
+        console.error("App fatal init error:", err);
+        appRouter.handleRoute(); // Attempt to show something even if init fails
     }
 }
 
-document.addEventListener('DOMContentLoaded', initApp);
+// Start the app
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initApp);
+} else {
+    initApp();
+}
