@@ -34,6 +34,7 @@ async function performScan(localPath) {
     const mm = await import('music-metadata');
     const files = await walkDir(localPath);
     const audioExtRegex = /\.(mp3|flac|wav|m4a|ogg|aac|opus|wma|aiff|alac|ape)$/i;
+    const excludedFallbackExtRegex = /\.(jpg|jpeg|png|gif|webp|txt|nfo|pdf|doc|docx|ini|json|xml|log|lrc|srt|ass|ssa|cue|m3u|m3u8)$/i;
 
     const library = {
         artists: {},
@@ -43,6 +44,8 @@ async function performScan(localPath) {
 
     let metadataFailures = 0;
     let nonAudioSkipped = 0;
+    let fallbackTracks = 0;
+    const fallbackCandidates = [];
 
     for (const file of files) {
         const hasAudioExtension = audioExtRegex.test(file);
@@ -52,6 +55,7 @@ async function performScan(localPath) {
         } catch (err) {
             if (!hasAudioExtension) {
                 nonAudioSkipped += 1;
+                fallbackCandidates.push(file);
                 continue;
             }
             metadataFailures += 1;
@@ -94,12 +98,57 @@ async function performScan(localPath) {
         library.artists[artist].albums = Array.from(library.artists[artist].albums);
     });
 
+    if (library.tracks.length === 0 && fallbackCandidates.length > 0) {
+        for (const file of fallbackCandidates) {
+            if (excludedFallbackExtRegex.test(file)) continue;
+
+            const title = path.basename(file, path.extname(file));
+            const trackId = `local_${Buffer.from(file).toString('base64')}`;
+            const artistName = 'Unknown Artist';
+            const albumName = 'Unknown Album';
+
+            const track = {
+                id: trackId,
+                type: 'local',
+                path: file,
+                title,
+                artist: artistName,
+                album: albumName,
+                genre: 'Unknown',
+                duration: 0,
+                year: null,
+                track_no: null,
+                bitrate: 0
+            };
+
+            library.tracks.push(track);
+
+            if (!library.artists[artistName]) {
+                library.artists[artistName] = { name: artistName, albums: new Set() };
+            }
+            library.artists[artistName].albums.add(albumName);
+
+            if (!library.albums[albumName]) {
+                library.albums[albumName] = { name: albumName, artist: artistName, tracks: [] };
+            }
+            library.albums[albumName].tracks.push(trackId);
+            fallbackTracks += 1;
+        }
+
+        Object.keys(library.artists).forEach((artist) => {
+            if (library.artists[artist].albums instanceof Set) {
+                library.artists[artist].albums = Array.from(library.artists[artist].albums);
+            }
+        });
+    }
+
     return {
         ...library,
         _scanDebug: {
             filesFound: files.length,
             metadataFailures,
-            nonAudioSkipped
+            nonAudioSkipped,
+            fallbackTracks
         }
     };
 }
@@ -126,8 +175,13 @@ router.post('/scan', async (req, res) => {
     isScanning = true;
     try {
         const library = await performScan(localPath);
+        if ((library._scanDebug?.filesFound || 0) === 0) {
+            return res.status(400).json({
+                error: `Aucun fichier détecté dans ${localPath} depuis le process Node. Vérifiez le montage Docker du HDD vers le conteneur.`
+            });
+        }
         cachedLibrary = library;
-        console.log(`✅ Scan complete. Found ${library.tracks.length} tracks. Files: ${library._scanDebug?.filesFound || 0}, metadata failures: ${library._scanDebug?.metadataFailures || 0}, non-audio skipped: ${library._scanDebug?.nonAudioSkipped || 0}`);
+        console.log(`✅ Scan complete. Found ${library.tracks.length} tracks. Files: ${library._scanDebug?.filesFound || 0}, metadata failures: ${library._scanDebug?.metadataFailures || 0}, non-audio skipped: ${library._scanDebug?.nonAudioSkipped || 0}, fallback tracks: ${library._scanDebug?.fallbackTracks || 0}`);
         return res.json({
             message: 'Scan terminé',
             tracks: library.tracks.length,
@@ -135,7 +189,8 @@ router.post('/scan', async (req, res) => {
             albums: Object.keys(library.albums).length,
             filesFound: library._scanDebug?.filesFound || 0,
             metadataFailures: library._scanDebug?.metadataFailures || 0,
-            nonAudioSkipped: library._scanDebug?.nonAudioSkipped || 0
+            nonAudioSkipped: library._scanDebug?.nonAudioSkipped || 0,
+            fallbackTracks: library._scanDebug?.fallbackTracks || 0
         });
     } catch (err) {
         console.error('Scan error:', err);

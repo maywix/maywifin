@@ -110,7 +110,8 @@ export async function renderSettings(container) {
             const filesFound = Number(res.filesFound || 0);
             const metadataFailures = Number(res.metadataFailures || 0);
             const nonAudioSkipped = Number(res.nonAudioSkipped || 0);
-            statusEl.textContent = `Scan terminé: ${count} piste${count > 1 ? 's' : ''} (fichiers: ${filesFound}, metadata KO: ${metadataFailures}, non-audio: ${nonAudioSkipped}).`;
+            const fallbackTracks = Number(res.fallbackTracks || 0);
+            statusEl.textContent = `Scan terminé: ${count} piste${count > 1 ? 's' : ''} (fichiers: ${filesFound}, metadata KO: ${metadataFailures}, non-audio: ${nonAudioSkipped}, fallback: ${fallbackTracks}).`;
         } catch (e) {
             statusEl.textContent = "Erreur: " + e.message;
         }
