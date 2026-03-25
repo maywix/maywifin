@@ -22,7 +22,7 @@ async function walkDir(dir) {
 
         if (stat && stat.isDirectory()) {
             results = results.concat(await walkDir(filePath));
-        } else if (filePath.match(/\.(mp3|flac|wav|m4a|ogg|aac|opus)$/i)) {
+        } else if (stat && stat.isFile()) {
             results.push(filePath);
         }
     }
@@ -33,6 +33,7 @@ async function walkDir(dir) {
 async function performScan(localPath) {
     const mm = await import('music-metadata');
     const files = await walkDir(localPath);
+    const audioExtRegex = /\.(mp3|flac|wav|m4a|ogg|aac|opus|wma|aiff|alac|ape)$/i;
 
     const library = {
         artists: {},
@@ -41,12 +42,18 @@ async function performScan(localPath) {
     };
 
     let metadataFailures = 0;
+    let nonAudioSkipped = 0;
 
     for (const file of files) {
+        const hasAudioExtension = audioExtRegex.test(file);
         let metadata = null;
         try {
             metadata = await mm.parseFile(file, { duration: true, skipCovers: true });
         } catch (err) {
+            if (!hasAudioExtension) {
+                nonAudioSkipped += 1;
+                continue;
+            }
             metadataFailures += 1;
             console.error(`Failed to parse metadata for ${file}:`, err.message);
         }
@@ -91,7 +98,8 @@ async function performScan(localPath) {
         ...library,
         _scanDebug: {
             filesFound: files.length,
-            metadataFailures
+            metadataFailures,
+            nonAudioSkipped
         }
     };
 }
@@ -119,14 +127,15 @@ router.post('/scan', async (req, res) => {
     try {
         const library = await performScan(localPath);
         cachedLibrary = library;
-        console.log(`✅ Scan complete. Found ${library.tracks.length} tracks. Files: ${library._scanDebug?.filesFound || 0}, metadata failures: ${library._scanDebug?.metadataFailures || 0}`);
+        console.log(`✅ Scan complete. Found ${library.tracks.length} tracks. Files: ${library._scanDebug?.filesFound || 0}, metadata failures: ${library._scanDebug?.metadataFailures || 0}, non-audio skipped: ${library._scanDebug?.nonAudioSkipped || 0}`);
         return res.json({
             message: 'Scan terminé',
             tracks: library.tracks.length,
             artists: Object.keys(library.artists).length,
             albums: Object.keys(library.albums).length,
             filesFound: library._scanDebug?.filesFound || 0,
-            metadataFailures: library._scanDebug?.metadataFailures || 0
+            metadataFailures: library._scanDebug?.metadataFailures || 0,
+            nonAudioSkipped: library._scanDebug?.nonAudioSkipped || 0
         });
     } catch (err) {
         console.error('Scan error:', err);

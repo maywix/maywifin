@@ -107,7 +107,10 @@ export async function renderSettings(container) {
             const res = await Api.scanLibrary();
             AppState.library = await Api.getLocalLibrary();
             const count = Number(res.tracks || 0);
-            statusEl.textContent = `Scan terminé: ${count} piste${count > 1 ? 's' : ''}.`;
+            const filesFound = Number(res.filesFound || 0);
+            const metadataFailures = Number(res.metadataFailures || 0);
+            const nonAudioSkipped = Number(res.nonAudioSkipped || 0);
+            statusEl.textContent = `Scan terminé: ${count} piste${count > 1 ? 's' : ''} (fichiers: ${filesFound}, metadata KO: ${metadataFailures}, non-audio: ${nonAudioSkipped}).`;
         } catch (e) {
             statusEl.textContent = "Erreur: " + e.message;
         }
