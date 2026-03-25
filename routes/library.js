@@ -40,50 +40,60 @@ async function performScan(localPath) {
         tracks: []
     };
 
+    let metadataFailures = 0;
+
     for (const file of files) {
+        let metadata = null;
         try {
-            const metadata = await mm.parseFile(file, { duration: true, skipCovers: true });
-
-            const artistName = metadata.common.artist || metadata.common.albumartist || 'Unknown Artist';
-            const albumName = metadata.common.album || 'Unknown Album';
-            const title = metadata.common.title || path.basename(file, path.extname(file));
-            const trackId = `local_${Buffer.from(file).toString('base64')}`;
-
-            const track = {
-                id: trackId,
-                type: 'local',
-                path: file,
-                title,
-                artist: artistName,
-                album: albumName,
-                genre: metadata.common.genre ? metadata.common.genre[0] : 'Unknown',
-                duration: metadata.format.duration || 0,
-                year: metadata.common.year,
-                track_no: metadata.common.track.no || null,
-                bitrate: metadata.format.bitrate || 0
-            };
-
-            library.tracks.push(track);
-
-            if (!library.artists[artistName]) {
-                library.artists[artistName] = { name: artistName, albums: new Set() };
-            }
-            library.artists[artistName].albums.add(albumName);
-
-            if (!library.albums[albumName]) {
-                library.albums[albumName] = { name: albumName, artist: artistName, tracks: [] };
-            }
-            library.albums[albumName].tracks.push(trackId);
+            metadata = await mm.parseFile(file, { duration: true, skipCovers: true });
         } catch (err) {
+            metadataFailures += 1;
             console.error(`Failed to parse metadata for ${file}:`, err.message);
         }
+
+        const artistName = metadata?.common?.artist || metadata?.common?.albumartist || 'Unknown Artist';
+        const albumName = metadata?.common?.album || 'Unknown Album';
+        const title = metadata?.common?.title || path.basename(file, path.extname(file));
+        const trackId = `local_${Buffer.from(file).toString('base64')}`;
+
+        const track = {
+            id: trackId,
+            type: 'local',
+            path: file,
+            title,
+            artist: artistName,
+            album: albumName,
+            genre: metadata?.common?.genre ? metadata.common.genre[0] : 'Unknown',
+            duration: metadata?.format?.duration || 0,
+            year: metadata?.common?.year,
+            track_no: metadata?.common?.track?.no || null,
+            bitrate: metadata?.format?.bitrate || 0
+        };
+
+        library.tracks.push(track);
+
+        if (!library.artists[artistName]) {
+            library.artists[artistName] = { name: artistName, albums: new Set() };
+        }
+        library.artists[artistName].albums.add(albumName);
+
+        if (!library.albums[albumName]) {
+            library.albums[albumName] = { name: albumName, artist: artistName, tracks: [] };
+        }
+        library.albums[albumName].tracks.push(trackId);
     }
 
     Object.keys(library.artists).forEach((artist) => {
         library.artists[artist].albums = Array.from(library.artists[artist].albums);
     });
 
-    return library;
+    return {
+        ...library,
+        _scanDebug: {
+            filesFound: files.length,
+            metadataFailures
+        }
+    };
 }
 
 router.get('/status', (req, res) => {
@@ -109,12 +119,14 @@ router.post('/scan', async (req, res) => {
     try {
         const library = await performScan(localPath);
         cachedLibrary = library;
-        console.log(`✅ Scan complete. Found ${library.tracks.length} tracks.`);
+        console.log(`✅ Scan complete. Found ${library.tracks.length} tracks. Files: ${library._scanDebug?.filesFound || 0}, metadata failures: ${library._scanDebug?.metadataFailures || 0}`);
         return res.json({
             message: 'Scan terminé',
             tracks: library.tracks.length,
             artists: Object.keys(library.artists).length,
-            albums: Object.keys(library.albums).length
+            albums: Object.keys(library.albums).length,
+            filesFound: library._scanDebug?.filesFound || 0,
+            metadataFailures: library._scanDebug?.metadataFailures || 0
         });
     } catch (err) {
         console.error('Scan error:', err);
