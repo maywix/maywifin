@@ -105,7 +105,9 @@ export async function renderSettings(container) {
         try {
             statusEl.textContent = "Scanning...";
             const res = await Api.scanLibrary();
-            statusEl.textContent = "Scan terminé.";
+            AppState.library = await Api.getLocalLibrary();
+            const count = Number(res.tracks || 0);
+            statusEl.textContent = `Scan terminé: ${count} piste${count > 1 ? 's' : ''}.`;
         } catch (e) {
             statusEl.textContent = "Erreur: " + e.message;
         }
@@ -141,6 +143,8 @@ export async function renderSettings(container) {
             await Api.saveSetting('source_jellyfin_url', url);
             await Api.saveSetting('source_jellyfin_username', username);
             await Api.saveSetting('source_jellyfin_password', password);
+            await Api.saveSetting('source_jellyfin_apikey', '');
+            await Api.saveSetting('source_jellyfin_userid', '');
 
             const result = await Api.connectJellyfin();
             statusEl.textContent = result.message || 'Connexion Jellyfin réussie';

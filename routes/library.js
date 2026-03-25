@@ -106,14 +106,19 @@ router.post('/scan', async (req, res) => {
     }
 
     isScanning = true;
-    res.json({ message: 'Scan started' });
-
     try {
         const library = await performScan(localPath);
         cachedLibrary = library;
         console.log(`✅ Scan complete. Found ${library.tracks.length} tracks.`);
+        return res.json({
+            message: 'Scan terminé',
+            tracks: library.tracks.length,
+            artists: Object.keys(library.artists).length,
+            albums: Object.keys(library.albums).length
+        });
     } catch (err) {
         console.error('Scan error:', err);
+        return res.status(500).json({ error: `Scan failed: ${err.message}` });
     } finally {
         isScanning = false;
     }

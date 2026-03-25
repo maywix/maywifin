@@ -43,23 +43,24 @@ function getJellyfinConfig() {
 
 async function getJellyfinAuth(forceRefresh = false) {
     const { url, apiKey, userId, username, password } = getJellyfinConfig();
+    const hasCredentials = Boolean(username && password);
 
     if (!url) {
         throw new Error('Jellyfin URL missing');
     }
 
-    // Legacy/fallback mode
-    if (apiKey && userId && !forceRefresh) {
+    // Legacy/fallback mode only when username/password are not configured
+    if (!hasCredentials && apiKey && userId && !forceRefresh) {
         return { url, token: apiKey, userId };
     }
 
-    if (!username || !password) {
+    if (!hasCredentials) {
         throw new Error('Jellyfin credentials missing');
     }
 
     const now = Date.now();
 
-    if (authCache.failedUntil > now) {
+    if (!forceRefresh && authCache.failedUntil > now) {
         throw new Error('Jellyfin login temporarily paused after failures. Retry in a few seconds.');
     }
 
@@ -86,9 +87,10 @@ async function getJellyfinAuth(forceRefresh = false) {
     });
 
     if (!authRes.ok) {
-        authCache.failedUntil = now + 30000;
+        authCache.failedUntil = now + 5000;
         authCache.lastError = `HTTP ${authRes.status}`;
-        throw new Error('Jellyfin login failed (check URL/username/password)');
+        const detail = await authRes.text().catch(() => '');
+        throw new Error(detail || 'Jellyfin login failed (check URL/username/password)');
     }
 
     const authData = await authRes.json();
