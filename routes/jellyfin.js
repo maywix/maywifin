@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { getJellyfinAuth } = require('./jellyfin-auth');
+const { verifyToken, requireAdmin } = require('./auth');
 
 // Unified proxy helper
 async function proxyJellyfinFallback(endpoint, req, res) {
@@ -50,8 +51,8 @@ async function proxyJellyfinFallback(endpoint, req, res) {
     }
 }
 
-// Explicit connect test / refresh token
-router.post('/connect', async (req, res) => {
+// Explicit connect test / refresh token (mutates stored credentials - admin only)
+router.post('/connect', verifyToken, requireAdmin, async (req, res) => {
     try {
         const auth = await getJellyfinAuth(true);
         const baseUrl = auth.url.endsWith('/') ? auth.url.slice(0, -1) : auth.url;
@@ -102,8 +103,8 @@ router.get('/tracks', (req, res) => {
         .catch((err) => res.status(400).json({ error: err.message }));
 });
 
-// Trigger Jellyfin library refresh scan
-router.post('/scan', async (req, res) => {
+// Trigger Jellyfin library refresh scan (remote side-effect - admin only)
+router.post('/scan', verifyToken, requireAdmin, async (req, res) => {
     let auth;
     try {
         auth = await getJellyfinAuth();

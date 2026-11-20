@@ -16,12 +16,16 @@
     <!-- Core CSS -->
     <link rel="stylesheet" href="/css/main.css">
     <link rel="stylesheet" href="/css/animations.css">
+    <link rel="stylesheet" href="/css/theme-aether.css">
 </head>
 <body>
 
     <!-- Dynamic Album Blur Backdrop -->
     <div id="app-backdrop" class="app-backdrop"></div>
     <div id="backdrop-overlay" class="backdrop-overlay"></div>
+
+    <!-- Top progress bar for route transitions (no full-page loading flash) -->
+    <div id="route-progress" class="route-progress"></div>
 
     <!-- Sidebar Navigation -->
     <nav class="sidebar">
@@ -34,6 +38,7 @@
             <li><a href="#/playlists" class="nav-btn" data-route="/playlists"><span class="material-symbols-rounded">queue_music</span> Playlists</a></li>
             <li><a href="#/radio" class="nav-btn" data-route="/radio"><span class="material-symbols-rounded">radio</span> Radio</a></li>
             <li class="spacer"></li>
+            <li id="nav-admin" style="display: none;"><a href="#/admin" class="nav-btn" data-route="/admin"><span class="material-symbols-rounded">admin_panel_settings</span> Admin</a></li>
             <li><a href="#/settings" class="nav-btn" data-route="/settings"><span class="material-symbols-rounded">settings</span> Settings</a></li>
         </ul>
     </nav>
@@ -72,38 +77,57 @@
         <!-- Central Controls -->
         <div class="player-controls">
             <div class="control-buttons">
-                <button id="btn-shuffle" class="icon-btn small"><span class="material-symbols-rounded">shuffle</span></button>
+                <button id="btn-shuffle" class="icon-btn small xs-hidden"><span class="material-symbols-rounded">shuffle</span></button>
                 <button id="btn-prev" class="icon-btn"><span class="material-symbols-rounded">skip_previous</span></button>
                 <button id="btn-play-pause" class="icon-btn play-btn"><span class="material-symbols-rounded" id="play-icon">play_arrow</span></button>
                 <button id="btn-next" class="icon-btn"><span class="material-symbols-rounded">skip_next</span></button>
-                <button id="btn-repeat" class="icon-btn small"><span class="material-symbols-rounded">repeat</span></button>
+                <button id="btn-repeat" class="icon-btn small xs-hidden"><span class="material-symbols-rounded">repeat</span></button>
             </div>
-            <div class="progress-container">
+            <div class="progress-container xs-hidden" id="progress-container">
                 <span id="time-current" class="time">0:00</span>
-                <input type="range" id="seek-bar" class="seek-bar" value="0" min="0" max="100" step="0.1">
+                <div class="seek-wrap is-disabled">
+                    <div class="waveform-hover" id="waveform-hover" aria-hidden="true"></div>
+                    <input type="range" id="seek-bar" class="seek-bar" value="0" min="0" max="100" step="any" aria-label="Position de lecture" disabled>
+                    <div class="seek-tooltip" aria-hidden="true">0:00</div>
+                </div>
                 <span id="time-total" class="time">0:00</span>
             </div>
         </div>
 
         <!-- Right Side Controls -->
-        <div class="extra-controls">
-            <!-- Speed Selector (Slowed/Sped) -->
-            <div class="player-speed-control">
-                <span class="label" id="speed-display">1.0x</span>
-                <input type="range" id="rate-bar" style="width: 60px; height: 4px;" value="1.0" min="0.5" max="2.0" step="0.05">
+        <div class="extra-controls xs-hidden">
+            <!-- Playback speed lives only in the Effets popup now (btn-fx below) -->
+
+            <!-- Quality Selector (custom dropdown) -->
+            <div class="quality-menu" id="quality-menu">
+                <button type="button" id="quality-menu-btn" class="quality-menu-btn" title="Qualité audio">
+                    <svg id="quality-atmos-icon" class="quality-atmos-icon" viewBox="0 0 24 24" role="img" xmlns="http://www.w3.org/2000/svg"><title>Dolby Atmos</title><path d="M24,20.352V3.648H0v16.704H24z M18.433,5.806h2.736v12.387h-2.736c-2.839,0-5.214-2.767-5.214-6.194S15.594,5.806,18.433,5.806z M2.831,5.806h2.736c2.839,0,5.214,2.767,5.214,6.194s-2.374,6.194-5.214,6.194H2.831V5.806z"></path></svg>
+                    <span id="quality-icon" class="material-symbols-rounded">high_quality</span>
+                </button>
+                <div class="quality-menu-panel hidden" id="quality-menu-panel">
+                    <div class="quality-menu-header">Qualité audio</div>
+                    <button type="button" class="quality-option" data-value="hires">
+                        <span class="quality-option-label">Hi-Res Lossless</span>
+                        <span class="quality-option-check material-symbols-rounded">check</span>
+                    </button>
+                    <button type="button" class="quality-option" data-value="lossless">
+                        <svg class="quality-option-atmos-badge hidden" viewBox="0 0 24 24" role="img" xmlns="http://www.w3.org/2000/svg"><title>Dolby Atmos</title><path d="M24,20.352V3.648H0v16.704H24z M18.433,5.806h2.736v12.387h-2.736c-2.839,0-5.214-2.767-5.214-6.194S15.594,5.806,18.433,5.806z M2.831,5.806h2.736c2.839,0,5.214,2.767,5.214,6.194s-2.374,6.194-5.214,6.194H2.831V5.806z"></path></svg>
+                        <span class="quality-option-label" data-normal-label="Lossless" data-atmos-label="Dolby Atmos">Lossless</span>
+                        <span class="quality-option-check material-symbols-rounded">check</span>
+                    </button>
+                    <button type="button" class="quality-option" data-value="320">
+                        <span class="quality-option-label">MP3 320 kbps</span>
+                        <span class="quality-option-check material-symbols-rounded">check</span>
+                    </button>
+                    <button type="button" class="quality-option" data-value="128">
+                        <span class="quality-option-label">MP3 128 kbps</span>
+                        <span class="quality-option-check material-symbols-rounded">check</span>
+                    </button>
+                    <div id="quality-hint" class="quality-menu-hint hidden"></div>
+                </div>
             </div>
 
-            <!-- Quality Selector -->
-            <div class="quality-selector">
-                <select id="stream-quality" class="invisible-select">
-                    <option value="lossless">Lossless</option>
-                    <option value="320000">320 kbps</option>
-                    <option value="256000">256 kbps</option>
-                    <option value="128000">128 kbps</option>
-                </select>
-                <span class="material-symbols-rounded">high_quality</span>
-            </div>
-            
+            <button id="btn-fx" class="icon-btn" title="Effets (Slowed/Reverb)"><span class="material-symbols-rounded">graphic_eq</span></button>
             <button id="btn-lyrics" class="icon-btn" title="Paroles"><span class="material-symbols-rounded">lyrics</span></button>
             <button id="btn-queue" class="icon-btn" title="File d'attente"><span class="material-symbols-rounded">list</span></button>
 

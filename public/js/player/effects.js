@@ -36,7 +36,11 @@ export const AudioEffects = {
 
     setup(ctx) {
         if (this.inGain) return; // already setup
+        console.log('[AudioEffects] setup() - ctx.state:', ctx.state, 'sampleRate:', ctx.sampleRate);
 
+        this.ctx = ctx;
+        this.reverbDecay = 3;
+        this.reverbRoomSize = 3;
         this.inGain = ctx.createGain();
         this.outGain = ctx.createGain();
         
@@ -62,17 +66,22 @@ export const AudioEffects = {
     },
 
     setReverb(amount) { // 0 to 1
-        if (!this.wetGain) return;
-        this.wetGain.gain.value = amount * 0.5; // Scale down a bit so it's not overwhelming
-        this.dryGain.gain.value = 1 - (amount * 0.3);
+        if (!this.wetGain) {
+            console.warn('[AudioEffects] setReverb called but wetGain not set up yet (amount=', amount, ')');
+            return;
+        }
+        // Was capped at 0.5 wet / -30% dry, which is barely audible at low-to-mid slider
+        // values on typical music (as opposed to a quiet test tone) - full range now.
+        this.wetGain.gain.value = amount;
+        this.dryGain.gain.value = 1 - (amount * 0.6);
+        console.log('[AudioEffects] setReverb amount=', amount, 'wetGain=', this.wetGain.gain.value, 'dryGain=', this.dryGain.gain.value, 'ctx.state=', this.ctx?.state);
     },
 
-    // For playbackRate pitch shift (Slowed / Sped up) since true pitch shifting in JS is heavy
-    setPlaybackRate(mediaElementNode, sourceHtmlAudioElement, rate) {
-        if (sourceHtmlAudioElement) {
-            // HTML5 audio playbackRate alters pitch natively
-            sourceHtmlAudioElement.playbackRate = rate;
-            sourceHtmlAudioElement.preservesPitch = false; // Force slowed+reverb effect natively
-        }
+    // decay: 0.5-6 (how fast the tail fades), roomSize: 0.5-6 (perceived space, in seconds of IR length)
+    setReverbShape({ decay, roomSize }) {
+        if (!this.ctx || !this.reverbNode) return;
+        this.reverbDecay = decay ?? this.reverbDecay;
+        this.reverbRoomSize = roomSize ?? this.reverbRoomSize;
+        this.reverbNode.buffer = this.generateImpulseResponse(this.ctx, this.reverbRoomSize, this.reverbDecay);
     }
 };

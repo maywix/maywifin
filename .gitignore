@@ -5,3 +5,11 @@ node_modules/
 *.log
 .DS_Store
 dist/
+db/waveform-cache/
+
+# Private library state and temporary database files
+data/
+*.sqlite-shm
+*.sqlite-wal
+*.bak.*
+.claude/

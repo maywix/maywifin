@@ -1,87 +1,79 @@
 import { Player } from '../player/player.js';
+import { Api } from '../api.js';
+import { bindSeekBar, updateProgress, setVolumeIcon } from '../player/ui.js';
 
+// The full-screen "now playing" player - opened from the mini player bar's cover art.
+// On desktop it's an optional Apple-Music-style overlay; on mobile it's the only place
+// the seek bar, volume and lyrics/FX shortcuts live, since the bottom player bar is too
+// narrow to hold them (see main.css's mobile breakpoints).
 export function showNowPlayingModal(track) {
     if (!track) return;
 
-    // Get cover URL
-    let coverUrl = track.id.startsWith('local_') 
-        ? `/api/library/cover/${track.id}` 
-        : `/api/jellyfin/cover/${track.id}`;
+    let coverUrl = Api.withAuth(track.id.startsWith('local_')
+        ? `/api/library/cover/${track.id}`
+        : `/api/jellyfin/cover/${track.id}`);
 
-    // Create modal
     const modal = document.createElement('div');
     modal.id = 'now-playing-modal';
-    modal.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        z-index: 9999;
-        background: rgba(0, 0, 0, 0.8);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        backdrop-filter: blur(4px);
-        animation: fadeIn 0.3s ease;
-    `;
+    modal.className = 'modal-overlay';
 
-    // Calculate duration
-    const m = Math.floor((track.duration || 0) / 60);
-    const s = Math.floor((track.duration || 0) % 60).toString().padStart(2, '0');
+    const currentVolume = document.getElementById('volume-bar')?.value ?? 100;
 
     const content = document.createElement('div');
-    content.style.cssText = `
-        width: 90%;
-        max-width: 600px;
-        background: var(--bg-elevated);
-        border-radius: var(--radius-lg);
-        padding: 32px;
-        text-align: center;
-        animation: slideUp 0.3s ease;
-    `;
+    content.className = 'modal-card now-playing-modal-card';
 
     content.innerHTML = `
-        <button id="close-modal" style="position: absolute; top: 16px; right: 16px; background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 28px;">✕</button>
-        
-        <img src="${coverUrl}" alt="Album art" style="width: 280px; height: 280px; border-radius: var(--radius-md); object-fit: cover; margin: 0 auto 32px; box-shadow: 0 16px 32px rgba(0,0,0,0.5);">
-        
-        <h1 style="font-size: 28px; margin-bottom: 8px; font-weight: 700;">${track.title}</h1>
-        <p style="font-size: 18px; color: var(--text-secondary); margin-bottom: 24px;">${track.artist}</p>
-        ${track.album ? `<p style="font-size: 14px; color: var(--text-muted); margin-bottom: 24px;">Album: ${track.album}</p>` : ''}
-        
-        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 32px;">Durée: ${m}:${s}</p>
-        
-        <div id="player-modal-controls" style="display: flex; gap: 16px; justify-content: center; align-items: center;">
-            <button id="modal-prev" style="width: 48px; height: 48px; border: 1px solid var(--text-secondary); background: transparent; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text-primary); transition: all 0.2s;">
+        <button id="close-modal" class="modal-close"><span class="material-symbols-rounded">close</span></button>
+
+        <img src="${coverUrl}" alt="Album art" class="now-playing-modal-cover">
+
+        <h1 class="now-playing-modal-title">${track.title}</h1>
+        <p class="text-secondary now-playing-modal-artist">${track.artist}</p>
+        ${track.album ? `<p class="text-muted text-sm now-playing-modal-album">${track.album}</p>` : ''}
+
+        <div class="progress-container now-playing-modal-progress">
+            <span id="modal-time-current" class="time">0:00</span>
+            <div class="seek-wrap is-disabled">
+                <input type="range" id="modal-seek-bar" class="seek-bar" value="0" min="0" max="100" step="any" aria-label="Position de lecture" disabled>
+            </div>
+            <span id="modal-time-total" class="time">0:00</span>
+        </div>
+
+        <div class="modal-transport">
+            <button id="modal-prev" class="modal-transport-btn">
                 <span class="material-symbols-rounded" style="font-size: 24px;">skip_previous</span>
             </button>
-            <button id="modal-play-pause" style="width: 64px; height: 64px; background: var(--accent); border: none; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--bg-base); transition: transform 0.2s;">
-                <span class="material-symbols-rounded" style="font-size: 32px;">play_arrow</span>
+            <button id="modal-play-pause" class="modal-transport-btn modal-play-pause">
+                <span class="material-symbols-rounded" style="font-size: 30px;">play_arrow</span>
             </button>
-            <button id="modal-next" style="width: 48px; height: 48px; border: 1px solid var(--text-secondary); background: transparent; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text-primary); transition: all 0.2s;">
+            <button id="modal-next" class="modal-transport-btn">
                 <span class="material-symbols-rounded" style="font-size: 24px;">skip_next</span>
             </button>
+        </div>
+
+        <div class="modal-secondary-controls">
+            <div class="volume-container">
+                <span class="material-symbols-rounded" id="modal-volume-icon">volume_up</span>
+                <input type="range" id="modal-volume-bar" class="volume-bar" value="${currentVolume}" min="0" max="100">
+            </div>
+            <button id="modal-btn-lyrics" class="icon-btn" title="Paroles"><span class="material-symbols-rounded">lyrics</span></button>
+            <button id="modal-btn-fx" class="icon-btn" title="Effets"><span class="material-symbols-rounded">graphic_eq</span></button>
         </div>
     `;
 
     modal.appendChild(content);
 
-    // Close modal
-    const closeBtn = modal.querySelector('#close-modal');
-    closeBtn.addEventListener('click', () => modal.remove());
-    
+    modal.querySelector('#close-modal').addEventListener('click', () => modal.remove());
     modal.addEventListener('click', (e) => {
         if (e.target === modal) modal.remove();
     });
 
-    // Player controls
     const playPauseBtn = modal.querySelector('#modal-play-pause');
     const updatePlayPauseIcon = () => {
         const isPlaying = Player.isPlaying();
-        playPauseBtn.innerHTML = isPlaying 
-            ? '<span class="material-symbols-rounded" style="font-size: 32px;">pause</span>'
-            : '<span class="material-symbols-rounded" style="font-size: 32px;">play_arrow</span>';
+        playPauseBtn.innerHTML = isPlaying
+            ? '<span class="material-symbols-rounded" style="font-size: 30px;">pause</span>'
+            : '<span class="material-symbols-rounded" style="font-size: 30px;">play_arrow</span>';
     };
 
     updatePlayPauseIcon();
@@ -96,30 +88,36 @@ export function showNowPlayingModal(track) {
         }
     });
 
-    modal.querySelector('#modal-prev').addEventListener('click', () => {
-        Player.previous();
+    modal.querySelector('#modal-prev').addEventListener('click', () => Player.previous());
+    modal.querySelector('#modal-next').addEventListener('click', () => Player.next());
+
+    // Volume - mirrors, and is mirrored by, the main player bar's volume slider (see ui.js).
+    const volBar = modal.querySelector('#modal-volume-bar');
+    setVolumeIcon('modal-volume-icon', volBar.value);
+    volBar.addEventListener('input', (e) => {
+        Player.setVolume(e.target.value / 100);
+        setVolumeIcon('modal-volume-icon', e.target.value);
+        const mainVolBar = document.getElementById('volume-bar');
+        if (mainVolBar) {
+            mainVolBar.value = e.target.value;
+            setVolumeIcon('volume-icon', e.target.value);
+        }
     });
 
-    modal.querySelector('#modal-next').addEventListener('click', () => {
-        Player.next();
+    // Lyrics/FX just trigger the real buttons - avoids duplicating their logic here,
+    // and keeps a single source of truth for what "open lyrics" / "open FX" means.
+    modal.querySelector('#modal-btn-lyrics').addEventListener('click', () => {
+        document.getElementById('btn-lyrics')?.click();
     });
-
-    // Add styles for animations
-    if (!document.querySelector('#modal-styles')) {
-        const style = document.createElement('style');
-        style.id = 'modal-styles';
-        style.textContent = `
-            @keyframes fadeIn {
-                from { opacity: 0; }
-                to { opacity: 1; }
-            }
-            @keyframes slideUp {
-                from { transform: translateY(20px); opacity: 0; }
-                to { transform: translateY(0); opacity: 1; }
-            }
-        `;
-        document.head.appendChild(style);
-    }
+    modal.querySelector('#modal-btn-fx').addEventListener('click', () => {
+        document.getElementById('btn-fx')?.click();
+    });
 
     document.body.appendChild(modal);
+
+    // Seek bar - wired and primed with the real current position/duration only now that it's
+    // in the DOM (ui.js finds it by id), so it doesn't sit at 0 until the next timeupdate
+    // tick (which never fires while paused).
+    bindSeekBar(modal.querySelector('#modal-seek-bar'));
+    updateProgress(Player.getCurrentTime(), Player.getDuration());
 }

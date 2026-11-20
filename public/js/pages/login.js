@@ -2,69 +2,62 @@ import { Api, AppState } from '../api.js';
 import { appRouter } from '../app.js';
 
 export async function renderLogin(container) {
-    // Check if already logged in
     if (Api.getToken()) {
         return appRouter.handleRoute();
     }
 
-    let html = `
-        <div style="display: flex; align-items: center; justify-content: center; min-height: 100vh; background: var(--bg-base);">
-            <div style="width: 100%; max-width: 400px; padding: 40px 32px;">
-                <h1 style="text-align: center; font-size: 32px; margin-bottom: 8px;">MayWiFin</h1>
-                <p style="text-align: center; font-size: 14px; color: var(--text-secondary); margin-bottom: 32px;">Votre lecteur musical personnel</p>
-                
-                <div id="login-form" style="display: block;">
-                    <h2 style="font-size: 20px; margin-bottom: 24px;">Connexion</h2>
-                    
-                    <div style="margin-bottom: 16px;">
-                        <label style="display: block; margin-bottom: 6px; font-size: 13px; font-weight: 600;">Nom d'utilisateur</label>
-                        <input id="login-username" type="text" placeholder="mon_pseudo" style="width: 100%; padding: 10px 12px; border: 1px solid var(--bg-elevated); border-radius: var(--radius-sm); background: var(--bg-elevated); color: var(--text-primary); font-size: 14px; box-sizing: border-box;">
+    container.innerHTML = `
+        <div style="display: flex; align-items: center; justify-content: center; min-height: 100vh;">
+            <div style="width: 100%; max-width: 380px; padding: 40px 28px;">
+                <h1 style="text-align: center; font-size: 28px; font-weight: 800; margin-bottom: 6px;">MayWiFin</h1>
+                <p class="text-secondary text-sm" style="text-align: center; margin-bottom: 32px;">Votre lecteur musical personnel</p>
+
+                <div id="login-form">
+                    <h2 style="font-size: 18px; font-weight: 700; margin-bottom: 20px;">Connexion</h2>
+
+                    <div class="field">
+                        <label class="field-label">Nom d'utilisateur</label>
+                        <input id="login-username" type="text" class="input" placeholder="mon_pseudo">
                     </div>
-                    
-                    <div style="margin-bottom: 24px;">
-                        <label style="display: block; margin-bottom: 6px; font-size: 13px; font-weight: 600;">Mot de passe</label>
-                        <input id="login-password" type="password" placeholder="••••••" style="width: 100%; padding: 10px 12px; border: 1px solid var(--bg-elevated); border-radius: var(--radius-sm); background: var(--bg-elevated); color: var(--text-primary); font-size: 14px; box-sizing: border-box;">
+
+                    <div class="field">
+                        <label class="field-label">Mot de passe</label>
+                        <input id="login-password" type="password" class="input" placeholder="••••••">
                     </div>
-                    
-                    <button id="btn-login" style="width: 100%; padding: 12px; background: var(--accent); color: var(--bg-base); border: none; border-radius: var(--radius-sm); font-weight: 600; cursor: pointer; font-size: 14px; transition: opacity 0.2s;">
-                        Se Connecter
-                    </button>
-                    
-                    <p style="text-align: center; margin-top: 16px; font-size: 14px;">
-                        Pas encore de compte ? <a href="#" id="toggle-register" style="color: var(--accent); cursor: pointer; text-decoration: none;">S'inscrire</a>
+
+                    <button id="btn-login" class="btn btn-primary btn-block">Se Connecter</button>
+
+                    <p class="text-sm" style="text-align: center; margin-top: 16px;">
+                        Pas encore de compte ? <a href="#" id="toggle-register" class="text-accent hover-underline" style="text-decoration: none;">S'inscrire</a>
                     </p>
-                    
-                    <div id="login-error" style="margin-top: 16px; padding: 12px; border-radius: var(--radius-sm); background: rgba(255, 85, 85, 0.1); color: #ff5555; display: none; font-size: 13px;"></div>
+
+                    <div id="login-error" class="error-msg" style="margin-top: 16px; display: none;"></div>
                 </div>
 
                 <div id="register-form" style="display: none;">
-                    <h2 style="font-size: 20px; margin-bottom: 24px;">Créer un compte</h2>
-                    
-                    <div style="margin-bottom: 16px;">
-                        <label style="display: block; margin-bottom: 6px; font-size: 13px; font-weight: 600;">Nom d'utilisateur</label>
-                        <input id="register-username" type="text" placeholder="mon_pseudo" style="width: 100%; padding: 10px 12px; border: 1px solid var(--bg-elevated); border-radius: var(--radius-sm); background: var(--bg-elevated); color: var(--text-primary); font-size: 14px; box-sizing: border-box;">
+                    <h2 style="font-size: 18px; font-weight: 700; margin-bottom: 20px;">Créer un compte</h2>
+
+                    <div class="field">
+                        <label class="field-label">Nom d'utilisateur</label>
+                        <input id="register-username" type="text" class="input" placeholder="mon_pseudo">
                     </div>
-                    
-                    <div style="margin-bottom: 24px;">
-                        <label style="display: block; margin-bottom: 6px; font-size: 13px; font-weight: 600;">Mot de passe (min 6 caractères)</label>
-                        <input id="register-password" type="password" placeholder="••••••" style="width: 100%; padding: 10px 12px; border: 1px solid var(--bg-elevated); border-radius: var(--radius-sm); background: var(--bg-elevated); color: var(--text-primary); font-size: 14px; box-sizing: border-box;">
+
+                    <div class="field">
+                        <label class="field-label">Mot de passe (min 6 caractères)</label>
+                        <input id="register-password" type="password" class="input" placeholder="••••••">
                     </div>
-                    
-                    <button id="btn-register" style="width: 100%; padding: 12px; background: var(--accent); color: var(--bg-base); border: none; border-radius: var(--radius-sm); font-weight: 600; cursor: pointer; font-size: 14px; transition: opacity 0.2s;">
-                        S'Inscrire
-                    </button>
-                    
-                    <p style="text-align: center; margin-top: 16px; font-size: 14px;">
-                        Déjà inscrit ? <a href="#" id="toggle-login" style="color: var(--accent); cursor: pointer; text-decoration: none;">Se Connecter</a>
+
+                    <button id="btn-register" class="btn btn-primary btn-block">S'Inscrire</button>
+
+                    <p class="text-sm" style="text-align: center; margin-top: 16px;">
+                        Déjà inscrit ? <a href="#" id="toggle-login" class="text-accent hover-underline" style="text-decoration: none;">Se Connecter</a>
                     </p>
-                    
-                    <div id="register-error" style="margin-top: 16px; padding: 12px; border-radius: var(--radius-sm); background: rgba(255, 85, 85, 0.1); color: #ff5555; display: none; font-size: 13px;"></div>
+
+                    <div id="register-error" class="error-msg" style="margin-top: 16px; display: none;"></div>
                 </div>
             </div>
         </div>
     `;
-
-    container.innerHTML = html;
 
     let publicStatus = { allowPublicRegistration: true };
     try {
@@ -73,13 +66,8 @@ export async function renderLogin(container) {
         console.error('Failed loading public auth status', err);
     }
 
-    if (!publicStatus.allowPublicRegistration) {
-        document.getElementById('toggle-register').closest('p').innerHTML =
-            '<span style="color: var(--text-secondary);">Création de compte désactivée (admin requis)</span>';
-        document.getElementById('register-form').style.display = 'none';
-    }
-
-    // Toggle between login and register
+    // Toggle between login and register (bound before the disabled-registration
+    // branch below, which can remove #toggle-register from the DOM entirely).
     document.getElementById('toggle-register').addEventListener('click', (e) => {
         if (!publicStatus.allowPublicRegistration) return;
         e.preventDefault();
@@ -93,7 +81,12 @@ export async function renderLogin(container) {
         document.getElementById('register-form').style.display = 'none';
     });
 
-    // Login
+    if (!publicStatus.allowPublicRegistration) {
+        document.getElementById('toggle-register').closest('p').innerHTML =
+            '<span class="text-secondary text-sm">Création de compte désactivée (admin requis)</span>';
+        document.getElementById('register-form').style.display = 'none';
+    }
+
     document.getElementById('btn-login').addEventListener('click', async () => {
         const username = document.getElementById('login-username').value;
         const password = document.getElementById('login-password').value;
@@ -118,7 +111,6 @@ export async function renderLogin(container) {
         }
     });
 
-    // Register
     document.getElementById('btn-register').addEventListener('click', async () => {
         const username = document.getElementById('register-username').value;
         const password = document.getElementById('register-password').value;

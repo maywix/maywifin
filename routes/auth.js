@@ -31,7 +31,10 @@ function generateToken(userId) {
 
 // Middleware to verify JWT
 function verifyToken(req, res, next) {
-    const token = req.headers.authorization?.split(' ')[1];
+    // Native <audio>/<img> elements can't attach an Authorization header, so streaming
+    // and cover-art endpoints must also accept the token as a query param (same pattern
+    // this app already uses for Jellyfin's own stream URLs via api_key=).
+    const token = req.headers.authorization?.split(' ')[1] || req.query.token;
     if (!token) return res.status(401).json({ error: "No token provided" });
 
     try {
@@ -47,6 +50,18 @@ function verifyToken(req, res, next) {
         next();
     } catch (err) {
         res.status(401).json({ error: "Invalid token" });
+    }
+}
+
+// Middleware to require an admin account (must run after verifyToken)
+function requireAdmin(req, res, next) {
+    try {
+        const user = db.prepare("SELECT is_admin FROM users WHERE id = ?").get(req.userId);
+        if (!user?.is_admin) return res.status(403).json({ error: "Admin only" });
+        req.isAdmin = true;
+        next();
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 }
 
@@ -171,11 +186,8 @@ router.get('/me', verifyToken, (req, res) => {
 });
 
 // List all users (admin only)
-router.get('/users', verifyToken, (req, res) => {
+router.get('/users', verifyToken, requireAdmin, (req, res) => {
     try {
-        const user = db.prepare("SELECT is_admin FROM users WHERE id = ?").get(req.userId);
-        if (!user?.is_admin) return res.status(403).json({ error: "Admin only" });
-
         const users = db.prepare("SELECT id, username, is_admin, created_at FROM users").all();
         res.json(users);
     } catch (err) {
@@ -184,13 +196,10 @@ router.get('/users', verifyToken, (req, res) => {
 });
 
 // Update user role (admin only)
-router.post('/users/:userId/admin', verifyToken, (req, res) => {
+router.post('/users/:userId/admin', verifyToken, requireAdmin, (req, res) => {
     const { is_admin } = req.body;
-    
-    try {
-        const admin = db.prepare("SELECT is_admin FROM users WHERE id = ?").get(req.userId);
-        if (!admin?.is_admin) return res.status(403).json({ error: "Admin only" });
 
+    try {
         db.prepare("UPDATE users SET is_admin = ? WHERE id = ?").run(is_admin ? 1 : 0, req.params.userId);
         res.json({ success: true });
     } catch (err) {
@@ -199,11 +208,8 @@ router.post('/users/:userId/admin', verifyToken, (req, res) => {
 });
 
 // Delete user (admin only)
-router.delete('/users/:userId', verifyToken, (req, res) => {
+router.delete('/users/:userId', verifyToken, requireAdmin, (req, res) => {
     try {
-        const admin = db.prepare("SELECT is_admin FROM users WHERE id = ?").get(req.userId);
-        if (!admin?.is_admin) return res.status(403).json({ error: "Admin only" });
-
         db.prepare("DELETE FROM users WHERE id = ?").run(req.params.userId);
         res.json({ success: true });
     } catch (err) {
@@ -213,3 +219,4 @@ router.delete('/users/:userId', verifyToken, (req, res) => {
 
 module.exports = router;
 module.exports.verifyToken = verifyToken;
+module.exports.requireAdmin = requireAdmin;

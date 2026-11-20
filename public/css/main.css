@@ -1,33 +1,62 @@
+/* ============================================================
+   MayWiFin — Design System
+   ============================================================ */
 :root {
-    /* Base Colors - Deep Dark Theme */
-    --bg-base: #0a0a0c;
-    --bg-surface: #141418;
-    --bg-elevated: #1e1e24;
-    
+    /* Surfaces */
+    --bg-void: #050506;
+    --bg-base: #0a0a0d;
+    --bg-surface: #121216;
+    --bg-elevated: #1a1a20;
+    --bg-elevated-2: #24242c;
+    --border-subtle: rgba(255, 255, 255, 0.07);
+    --border-strong: rgba(255, 255, 255, 0.14);
+
     /* Text */
-    --text-primary: #ffffff;
-    --text-secondary: #a0a0a8;
-    --text-muted: #6b6b73;
-    
-    /* Dynamic Accent (Changes via Settings / Album Cover) */
-    --accent: #ffffff; /* Requested by user: white default */
-    --accent-hover: #cccccc;
+    --text-primary: #f6f6f8;
+    --text-secondary: #9c9ca6;
+    --text-muted: #64646d;
+
+    /* Accent (dynamic — overridden by user's theme color) */
+    --accent: #ffffff;
+    --accent-hover: #d9d9d9;
+    --accent-contrast: #0a0a0d;
+    --accent-soft: rgba(255, 255, 255, 0.12);
     --accent-transparent: rgba(255, 255, 255, 0.15);
-    
-    /* Grid & Spacing */
+
+    /* Semantic */
+    --success: #3ddc84;
+    --success-soft: rgba(61, 220, 132, 0.12);
+    --danger: #ff5c6c;
+    --danger-soft: rgba(255, 92, 108, 0.12);
+    --warning: #ffb84d;
+    --warning-soft: rgba(255, 184, 77, 0.12);
+
+    /* Layout */
     --sidebar-width: 240px;
     --player-height: 90px;
-    --panel-width: 320px;
-    
-    /* Radius */
-    --radius-sm: 6px;
-    --radius-md: 12px;
-    --radius-lg: 18px;
+    --panel-width: 360px;
+    /* Replaced by a fixed bottom tab bar below the tablet breakpoint - see Responsive. */
+    --bottom-nav-height: 0px;
+
+    /* Radii */
+    --radius-xs: 4px;
+    --radius-sm: 8px;
+    --radius-md: 14px;
+    --radius-lg: 20px;
+    --radius-xl: 28px;
     --radius-full: 9999px;
 
-    /* Transitions */
-    --transition-fast: 0.15s ease;
-    --transition-normal: 0.3s ease;
+    /* Shadows */
+    --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.28);
+    --shadow-md: 0 10px 28px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 24px 56px rgba(0, 0, 0, 0.55);
+    --shadow-glow: 0 0 0 1px var(--border-subtle), var(--shadow-md);
+
+    /* Motion */
+    --ease: cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-fast: 0.15s var(--ease);
+    --transition-normal: 0.25s var(--ease);
+    --transition-slow: 0.4s var(--ease);
 }
 
 * {
@@ -36,58 +65,102 @@
     padding: 0;
 }
 
-body {
-    font-family: 'Inter', sans-serif;
-    background-color: var(--bg-base);
+::selection {
+    background: var(--accent-soft);
     color: var(--text-primary);
-    overflow: hidden; /* Prevent body scroll, handle scroll in main-content */
-    display: flex;
-    height: 100vh;
 }
 
-/* --- Backdrop Blur Effect (Symfonium/Apple Music style) --- */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: var(--bg-elevated-2);
+    border-radius: var(--radius-full);
+    border: 2px solid transparent;
+    background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #34343e;
+    background-clip: padding-box;
+}
+
+html {
+    color-scheme: dark;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 14px;
+    background-color: var(--bg-base);
+    color: var(--text-primary);
+    overflow: hidden;
+    display: flex;
+    height: 100vh;
+    -webkit-font-smoothing: antialiased;
+}
+
+a {
+    color: inherit;
+}
+
+:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: var(--radius-xs);
+}
+
+/* --- Backdrop Blur Effect --- */
 .app-backdrop {
     position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
     background-size: cover;
     background-position: center;
-    filter: blur(80px) saturate(1.5);
-    opacity: 0.15; /* subtle */
+    filter: blur(90px) saturate(1.6);
+    opacity: 0.18;
     z-index: -2;
     transition: background-image 1s ease;
 }
 .backdrop-overlay {
     position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
-    background: linear-gradient(to bottom, transparent, var(--bg-base) 80%);
+    background: linear-gradient(180deg, transparent, var(--bg-base) 75%);
     z-index: -1;
 }
 
-/* --- Layout --- */
-
+/* ============================================================
+   Layout
+   ============================================================ */
 .sidebar {
     width: var(--sidebar-width);
-    background-color: transparent /* rgba(10,10,12, 0.5) */;
+    flex-shrink: 0;
     display: flex;
     flex-direction: column;
-    padding: 24px 16px;
-    padding-bottom: calc(var(--player-height) + 24px); /* Space for player bar overlay */
+    padding: 28px 14px;
+    padding-bottom: calc(var(--player-height) + 24px);
     z-index: 10;
 }
 
 .sidebar-header h2 {
-    font-size: 24px;
+    font-size: 22px;
     font-weight: 800;
-    letter-spacing: -1px;
-    margin-bottom: 40px;
-    padding-left: 12px;
+    letter-spacing: -0.5px;
+    margin-bottom: 36px;
+    padding-left: 14px;
+    background: linear-gradient(135deg, var(--text-primary), var(--text-secondary));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 
 .nav-links {
     list-style: none;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 2px;
     flex: 1;
 }
 
@@ -98,14 +171,14 @@ body {
 .nav-btn {
     display: flex;
     align-items: center;
-    gap: 16px;
-    padding: 12px 16px;
-    border-radius: var(--radius-md);
+    gap: 14px;
+    padding: 11px 14px;
+    border-radius: var(--radius-sm);
     color: var(--text-secondary);
     text-decoration: none;
     font-weight: 600;
-    font-size: 15px;
-    transition: var(--transition-fast);
+    font-size: 14px;
+    transition: background-color var(--transition-fast), color var(--transition-fast);
 }
 
 .nav-btn:hover {
@@ -114,28 +187,38 @@ body {
 }
 
 .nav-btn.active {
-    color: var(--bg-base); /* Contrast against white accent */
+    color: var(--accent-contrast);
     background-color: var(--accent);
 }
 
 .nav-btn .material-symbols-rounded {
-    font-size: 22px;
+    font-size: 21px;
 }
 
 /* --- Main Content --- */
 .main-content {
     flex: 1;
-    padding: 32px;
+    min-width: 0;
+    padding: 36px 40px;
     overflow-y: auto;
-    padding-bottom: calc(var(--player-height) + 32px); /* Space for player */
+    padding-bottom: calc(var(--player-height) + 40px);
     z-index: 5;
+    /* Scopes the route-change crossfade (see app.js's startViewTransition) to just this
+       region, so the sidebar/player bar never take part in it and stay perfectly still. */
+    view-transition-name: main-content;
 }
 
-/* --- Right Panel (Lyrics/Queue) --- */
+::view-transition-old(main-content),
+::view-transition-new(main-content) {
+    animation-duration: 0.18s;
+}
+
+/* --- Right Panel --- */
 .right-panel {
     width: var(--panel-width);
+    flex-shrink: 0;
     background-color: var(--bg-surface);
-    border-left: 1px solid var(--bg-elevated);
+    border-left: 1px solid var(--border-subtle);
     display: flex;
     flex-direction: column;
     z-index: 20;
@@ -148,88 +231,140 @@ body {
 }
 
 .panel-header {
-    padding: 24px;
+    padding: 22px 24px;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.panel-header h3 {
+    font-size: 15px;
+    font-weight: 700;
 }
 
 .panel-content {
     flex: 1;
     overflow-y: auto;
-    padding: 0 24px 24px 24px;
+    padding: 20px 24px 24px;
 }
 
-/* --- Player Bar --- */
+/* --- Synced lyrics (Apple-Music style: big, breathing room, the sung line pops) --- */
+.lyric-line {
+    font-size: 21px;
+    font-weight: 700;
+    line-height: 1.35;
+    color: var(--text-muted);
+    opacity: 0.45;
+    margin: 0 0 26px;
+    cursor: pointer;
+    transform-origin: left center;
+    transition: color var(--transition-slow), opacity var(--transition-slow),
+        transform var(--transition-slow), font-size var(--transition-slow);
+}
+
+.lyric-line:hover {
+    opacity: 0.8;
+}
+
+.lyric-line.active {
+    color: var(--text-primary);
+    opacity: 1;
+    font-size: 25px;
+    transform: scale(1.03);
+}
+
+.lyric-line.active:hover {
+    opacity: 1;
+}
+
+.lyrics-loading,
+.no-lyrics {
+    color: var(--text-muted);
+    font-size: 14px;
+    padding: 12px 0;
+}
+
+.plain-lyrics {
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 2.1;
+    color: var(--text-secondary);
+}
+
+/* ============================================================
+   Player Bar
+   ============================================================ */
 .player-bar {
     position: fixed;
     bottom: 0; left: 0; right: 0;
     height: var(--player-height);
-    background-color: rgba(20, 20, 24, 0.85); /* Semi-transparent */
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-top: 1px solid rgba(255,255,255, 0.05);
+    background-color: rgba(14, 14, 17, 0.82);
+    backdrop-filter: blur(24px) saturate(1.4);
+    -webkit-backdrop-filter: blur(24px) saturate(1.4);
+    border-top: 1px solid var(--border-subtle);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 24px;
+    padding: 0 20px;
     z-index: 100;
 }
 
 .now-playing {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 14px;
     width: 30%;
-    min-width: 250px;
+    min-width: 220px;
 }
 
 .cover-art {
-    width: 56px;
-    height: 56px;
+    width: 54px;
+    height: 54px;
     border-radius: var(--radius-sm);
     object-fit: cover;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    box-shadow: var(--shadow-sm);
+    background: var(--bg-elevated);
 }
 
 .track-details {
     display: flex;
     flex-direction: column;
+    gap: 2px;
     overflow: hidden;
 }
 
 .track-details .title {
     font-weight: 600;
-    font-size: 15px;
+    font-size: 14px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
 .track-details .artist {
-    font-size: 13px;
+    font-size: 12px;
     color: var(--text-secondary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-/* Player Controls Center */
 .player-controls {
     flex: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 8px;
+    max-width: 720px;
 }
 
 .control-buttons {
     display: flex;
     align-items: center;
-    gap: 24px;
+    gap: 20px;
 }
 
-/* Icon Buttons */
 .icon-btn {
     background: none;
     border: none;
@@ -238,42 +373,52 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: var(--transition-fast);
+    border-radius: var(--radius-full);
+    padding: 6px;
+    transition: color var(--transition-fast), transform var(--transition-fast), background-color var(--transition-fast);
 }
 
 .icon-btn:hover {
     color: var(--text-primary);
-    transform: scale(1.1);
+    background-color: var(--bg-elevated);
+}
+
+.icon-btn:active {
+    transform: scale(0.92);
 }
 
 .icon-btn.small .material-symbols-rounded {
-    font-size: 20px;
+    font-size: 19px;
 }
 
 .icon-btn .material-symbols-rounded {
-    font-size: 28px;
+    font-size: 26px;
+}
+
+.icon-btn.active-toggle {
+    color: var(--accent);
 }
 
 .play-btn {
-    width: 40px;
-    height: 40px;
+    width: 38px;
+    height: 38px;
     border-radius: 50%;
     background-color: var(--text-primary);
     color: var(--bg-base);
 }
 
 .play-btn:hover {
-    transform: scale(1.05);
+    transform: scale(1.06);
     background-color: var(--accent);
+    color: var(--accent-contrast);
 }
 
 /* Progress Bar */
 .progress-container {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     width: 100%;
-    max-width: 600px;
 }
 
 .progress-container .time {
@@ -281,162 +426,1474 @@ body {
     color: var(--text-muted);
     font-variant-numeric: tabular-nums;
     font-weight: 500;
+    min-width: 32px;
 }
 
-/* Inputs range styling - Professional looks */
+/* Elapsed time hugs the bar's left end instead of floating in a fixed-width box. */
+.progress-container .time:first-child {
+    text-align: right;
+}
+
+/* Seek bar. The rail and the played fill are drawn by the wrapper's ::before/::after, NOT by
+   the slider's native track: that makes the fill a plain % of the bar that lines up with the
+   handle at both ends (a native track fill has to be faked against the handle's travel, which
+   is off by half a handle at 0% and 100%). The <input type=range> on top only handles input -
+   it's transparent except for its handle, and is widened by one handle so the handle's centre
+   travels exactly from the bar's left end to its right end. --seek-p (0..1) is set on this
+   wrapper from ui.js. The wrapper is much taller than the visible bar on purpose: that's the
+   hit area, so the bar is easy to grab without being thick. */
+.seek-wrap {
+    --seek-thumb: 14px;
+    --seek-rail-h: 4px;
+    --seek-rail: rgba(255, 255, 255, 0.16);
+    position: relative;
+    flex: 1;
+    min-width: 0;
+    height: 24px;
+    touch-action: none;
+}
+
+.seek-wrap::before,
+.seek-wrap::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    height: var(--seek-rail-h);
+    transform: translateY(-50%);
+    border-radius: var(--radius-full);
+    pointer-events: none;
+    transition: height var(--transition-fast), background-color var(--transition-fast), opacity var(--transition-fast);
+}
+
+.seek-wrap::before {
+    right: 0;
+    background: var(--seek-rail);
+}
+
+.seek-wrap::after {
+    width: calc(var(--seek-p, 0) * 100%);
+    background: var(--accent);
+}
+
+.seek-wrap.is-disabled {
+    opacity: 0.45;
+}
+
+@media (hover: hover) {
+    .seek-wrap:not(.is-disabled):hover {
+        --seek-rail-h: 6px;
+        --seek-rail: rgba(255, 255, 255, 0.24);
+    }
+}
+
+.seek-wrap.is-dragging {
+    --seek-rail-h: 6px;
+    --seek-rail: rgba(255, 255, 255, 0.24);
+}
+
+/* SoundCloud-style hover "audiometer" on the seek bar - bar heights are REAL per-second
+   amplitude peaks decoded server-side via ffmpeg (routes/library.js /waveform/:id), not a
+   live Web Audio analysis (that needs a permanent audio-graph connection, which is exactly
+   what silently breaks multichannel/Atmos playback - see player.js's lazy-init comments).
+   ui.js sets each bar's height inline from the real peak data and adds .has-waveform to the
+   wrapper once it has some - until then (and for tracks that can't be analysed, like Jellyfin
+   ones) it stays hidden and the plain bar is all there is. It used to show 100 identical flat
+   bars as a placeholder, which just looked like a dotted, broken progress bar. */
+.waveform-hover {
+    position: absolute;
+    left: 0; right: 0; top: 50%;
+    transform: translateY(-50%);
+    height: 20px;
+    display: flex;
+    align-items: center;
+    /* 100 bars have to fit however wide the seek bar is (fixed 2px gaps + 1.5px bars needed
+       348px and spilled out of narrower bars, over the time label), so the gap shrinks with it. */
+    gap: clamp(1px, 0.5%, 2px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease;
+    z-index: 1;
+}
+
+.waveform-hover .wf-bar {
+    flex: 1;
+    min-width: 0;
+    background: rgba(255, 255, 255, 0.22);
+    border-radius: 1px;
+    height: 30%;
+    transition: height 0.12s ease, background 0.1s ease;
+}
+
+.waveform-hover .wf-bar.is-played {
+    background: var(--accent);
+}
+
+.seek-wrap.has-waveform.is-dragging .waveform-hover {
+    opacity: 1;
+}
+
+.seek-wrap.has-waveform.is-dragging::before,
+.seek-wrap.has-waveform.is-dragging::after {
+    opacity: 0;
+}
+
+@media (hover: hover) {
+    .seek-wrap.has-waveform:not(.is-disabled):hover .waveform-hover {
+        opacity: 1;
+    }
+
+    .seek-wrap.has-waveform:not(.is-disabled):hover::before,
+    .seek-wrap.has-waveform:not(.is-disabled):hover::after {
+        opacity: 0;
+    }
+}
+
+/* Time under the pointer (hover) or under the handle (drag). Positioned from ui.js. */
+.seek-tooltip {
+    position: absolute;
+    bottom: calc(100% - 3px);
+    left: 0;
+    transform: translateX(-50%);
+    padding: 3px 7px;
+    border-radius: var(--radius-xs);
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-strong);
+    box-shadow: var(--shadow-sm);
+    color: var(--text-primary);
+    font-size: 11px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.2;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.12s ease;
+    z-index: 3;
+}
+
+@media (hover: hover) {
+    .seek-wrap:not(.is-disabled):hover .seek-tooltip {
+        opacity: 1;
+    }
+}
+
+.seek-wrap.is-dragging .seek-tooltip {
+    opacity: 1;
+}
+
+/* The slider itself: invisible input layer + the handle. The native track is as tall as the
+   handle so the handle needs no margin trick to sit centred on the bar. */
+.seek-wrap .seek-bar[type=range] {
+    position: absolute;
+    top: 0;
+    left: calc(var(--seek-thumb) / -2);
+    width: calc(100% + var(--seek-thumb));
+    height: 100%;
+    margin: 0;
+    z-index: 2;
+    background: transparent;
+    cursor: pointer;
+    touch-action: none;
+}
+
+.seek-wrap .seek-bar[type=range]:disabled {
+    cursor: default;
+}
+
+/* Keyboard focus is shown by the handle's ring below, not a box around the whole hit area. */
+.seek-wrap .seek-bar[type=range]:focus {
+    outline: none;
+}
+
+.seek-wrap .seek-bar[type=range]::-webkit-slider-runnable-track {
+    height: var(--seek-thumb);
+    background: transparent;
+    border-radius: 0;
+}
+
+.seek-wrap .seek-bar[type=range]::-moz-range-track {
+    height: var(--seek-thumb);
+    background: transparent;
+}
+
+.seek-wrap .seek-bar[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    box-sizing: border-box;
+    width: var(--seek-thumb);
+    height: var(--seek-thumb);
+    margin-top: 0;
+    border: 0;
+    border-radius: 50%;
+    background: var(--text-primary);
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.55);
+    opacity: 0;
+    transform: scale(0.6);
+    transition: opacity var(--transition-fast), transform 0.12s var(--ease), box-shadow var(--transition-fast);
+}
+
+.seek-wrap .seek-bar[type=range]::-moz-range-thumb {
+    box-sizing: border-box;
+    width: var(--seek-thumb);
+    height: var(--seek-thumb);
+    border: 0;
+    border-radius: 50%;
+    background: var(--text-primary);
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.55);
+    opacity: 0;
+    transform: scale(0.6);
+    transition: opacity var(--transition-fast), transform 0.12s var(--ease), box-shadow var(--transition-fast);
+}
+
+/* Handle shown on hover / keyboard focus, and always on touch (there's no hover there). */
+@media (hover: hover) {
+    .seek-wrap:hover .seek-bar[type=range]:not(:disabled)::-webkit-slider-thumb {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    .seek-wrap:hover .seek-bar[type=range]:not(:disabled)::-moz-range-thumb {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@media (hover: none) {
+    .seek-wrap .seek-bar[type=range]:not(:disabled)::-webkit-slider-thumb {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    .seek-wrap .seek-bar[type=range]:not(:disabled)::-moz-range-thumb {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.seek-wrap .seek-bar[type=range]:not(:disabled):focus-visible::-webkit-slider-thumb {
+    opacity: 1;
+    transform: scale(1);
+    box-shadow: 0 0 0 4px var(--accent-transparent), 0 1px 6px rgba(0, 0, 0, 0.55);
+}
+
+.seek-wrap .seek-bar[type=range]:not(:disabled):focus-visible::-moz-range-thumb {
+    opacity: 1;
+    transform: scale(1);
+    box-shadow: 0 0 0 4px var(--accent-transparent), 0 1px 6px rgba(0, 0, 0, 0.55);
+}
+
+/* In the full-screen player the seek bar is the primary control, not a peripheral one:
+   bigger handle and rail, and the handle is always there. */
+.now-playing-modal-progress .seek-wrap {
+    --seek-thumb: 18px;
+    --seek-rail-h: 5px;
+    height: 36px;
+}
+
+.now-playing-modal-progress .seek-wrap .seek-bar[type=range]:not(:disabled)::-webkit-slider-thumb {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.now-playing-modal-progress .seek-wrap .seek-bar[type=range]:not(:disabled)::-moz-range-thumb {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* Last on purpose (same specificity as the "shown" rules above): being dragged wins. */
+.seek-wrap.is-dragging .seek-bar[type=range]:not(:disabled)::-webkit-slider-thumb {
+    opacity: 1;
+    transform: scale(1.2);
+}
+
+.seek-wrap.is-dragging .seek-bar[type=range]:not(:disabled)::-moz-range-thumb {
+    opacity: 1;
+    transform: scale(1.2);
+}
+
+/* Range inputs */
 input[type=range] {
     -webkit-appearance: none;
     appearance: none;
     width: 100%;
     background: transparent;
     cursor: pointer;
-    height: 20px;
+    height: 18px;
     display: flex;
     align-items: center;
 }
 
 input[type=range]::-webkit-slider-runnable-track {
     height: 4px;
-    background: var(--bg-elevated);
-    border-radius: 2px;
-    transition: background 0.2s;
-    /* Simulate fill progress by coloring the track */
-    box-shadow: inset 0 0 0 0 var(--accent);
+    background: var(--bg-elevated-2);
+    border-radius: var(--radius-full);
+    transition: background var(--transition-fast);
 }
 
-.seek-bar:hover::-webkit-slider-runnable-track {
-    background: #333;
+input[type=range]:hover::-webkit-slider-runnable-track {
+    background: #3a3a44;
 }
 
 input[type=range]::-webkit-slider-thumb {
     -webkit-appearance: none;
-    height: 12px;
-    width: 12px;
+    height: 13px;
+    width: 13px;
     border-radius: 50%;
     background: var(--text-primary);
     border: 2px solid var(--bg-surface);
-    margin-top: -4px;
+    margin-top: -4.5px;
     opacity: 0;
-    transition: opacity var(--transition-fast), transform 0.1s;
-    box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    transition: opacity var(--transition-fast), transform 0.1s var(--ease);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
 }
 
-input[type=range]:hover::-webkit-slider-thumb {
+input[type=range]:hover::-webkit-slider-thumb,
+input[type=range]:focus-visible::-webkit-slider-thumb {
     opacity: 1;
 }
 
 input[type=range]:active::-webkit-slider-thumb {
-    transform: scale(1.2);
+    transform: scale(1.25);
 }
 
-/* Artist UI - Perfectly round */
-.artist-card img, .artist-header-img {
-    border-radius: 50% !important;
-    aspect-ratio: 1 / 1;
-    object-fit: cover;
-    background: var(--bg-elevated);
+/* In a modal (e.g. the FX popup) sliders are the primary content, not a peripheral
+   control - always show a slightly bigger, easier-to-grab thumb instead of only on
+   hover (which doesn't even exist as a concept on touch), for a much smoother drag. */
+.modal-card input[type=range]::-webkit-slider-thumb {
+    height: 16px;
+    width: 16px;
+    margin-top: -6px;
+    opacity: 1;
 }
 
-/* Hover effects */
-.glass-card {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: var(--radius-lg);
-    overflow: hidden;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    cursor: pointer;
+.modal-card input[type=range]::-moz-range-thumb {
+    height: 16px;
+    width: 16px;
 }
 
-.glass-card:hover {
-    background: rgba(255, 255, 255, 0.08);
-    transform: translateY(-8px);
-    box-shadow: 0 12px 24px rgba(0,0,0,0.4);
-    border-color: rgba(255, 255, 255, 0.15);
+input[type=range]::-moz-range-track {
+    height: 4px;
+    background: var(--bg-elevated-2);
+    border-radius: var(--radius-full);
+}
+input[type=range]::-moz-range-thumb {
+    height: 13px;
+    width: 13px;
+    border-radius: 50%;
+    background: var(--text-primary);
+    border: 2px solid var(--bg-surface);
 }
 
-.hover-underline:hover {
-    text-decoration: underline !important;
-}
-
-.track-row:hover {
-    background-color: var(--bg-elevated);
-}
-
-.btn-like-active {
-    color: #ff4d4d !important;
-}
-
-/* Speed Selector in Player */
-.player-speed-control {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    min-width: 60px;
-}
-
-.player-speed-control .label {
-    font-size: 10px;
-    font-weight: 700;
-    color: var(--text-muted);
-}
-
-/* Extra Controls (Right) */
 .extra-controls {
     width: 30%;
-    min-width: 250px;
+    min-width: 230px;
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    gap: 16px;
+    gap: 10px;
 }
 
 .volume-container {
     display: flex;
     align-items: center;
     gap: 8px;
-    width: 120px;
+    width: 110px;
 }
 
 .volume-container .material-symbols-rounded {
-    font-size: 20px;
+    font-size: 19px;
     color: var(--text-secondary);
 }
 
-.quality-selector {
+/* ============================================================
+   Quality menu (custom dropdown, replaces the old invisible-<select> hack)
+   ============================================================ */
+.quality-menu {
     position: relative;
-    color: var(--text-secondary);
-    transition: color 0.2s;
 }
 
-.quality-selector:hover {
+.quality-menu-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: var(--radius-full);
+    transition: color var(--transition-fast), background-color var(--transition-fast);
+}
+
+.quality-menu-btn:hover,
+.quality-menu.is-open .quality-menu-btn {
+    color: var(--text-primary);
+    background-color: var(--bg-elevated);
+}
+
+.quality-menu-btn .material-symbols-rounded {
+    font-size: 22px;
+}
+
+.quality-menu.is-max-quality .quality-menu-btn {
     color: var(--accent);
 }
 
-.invisible-select {
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    opacity: 0;
-    cursor: pointer;
-    width: 100%;
+/* Dolby Atmos glyph - inherits currentColor so it themes with the rest of the button.
+   Hidden by default via display:none (not the .hidden utility, which is !important and
+   would block the .is-atmos rule below from ever showing it again). */
+.quality-atmos-icon {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+    display: none;
 }
 
-/* Typo/Headings for pages */
+.quality-menu.is-atmos .quality-menu-btn .quality-atmos-icon {
+    display: block;
+}
+.quality-menu.is-atmos .quality-menu-btn #quality-icon {
+    display: none;
+}
+
+.quality-menu-panel {
+    position: absolute;
+    bottom: calc(100% + 10px);
+    right: -8px;
+    width: 230px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    padding: 6px;
+    z-index: 200;
+    animation: fadeIn 0.15s ease;
+}
+
+.quality-menu-header {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    padding: 8px 10px 6px;
+}
+
+.quality-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    background: none;
+    border: none;
+    text-align: left;
+    padding: 9px 10px;
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-size: 13.5px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color var(--transition-fast);
+}
+
+.quality-option:hover:not(:disabled) {
+    background: var(--bg-elevated-2);
+}
+
+.quality-option:disabled {
+    color: var(--text-muted);
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.quality-option-label {
+    flex: 1;
+}
+
+.quality-option-check {
+    font-size: 18px !important;
+    color: var(--accent);
+    visibility: hidden;
+}
+
+.quality-option.active .quality-option-check {
+    visibility: visible;
+}
+
+.quality-option-atmos-badge {
+    width: 15px;
+    height: 15px;
+    fill: currentColor;
+    color: var(--accent);
+}
+
+.quality-menu-hint {
+    font-size: 11.5px;
+    color: var(--text-muted);
+    padding: 8px 10px 4px;
+    border-top: 1px solid var(--border-subtle);
+    margin-top: 4px;
+}
+
+/* ============================================================
+   Typography
+   ============================================================ */
 .page-title {
-    font-size: 48px;
+    font-size: 34px;
     font-weight: 800;
-    letter-spacing: -2px;
-    margin-bottom: 32px;
+    letter-spacing: -1px;
+    margin-bottom: 6px;
+}
+
+.page-subtitle {
+    color: var(--text-secondary);
+    font-size: 15px;
+    margin-bottom: 28px;
+}
+
+.btn-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 8px 10px 8px 6px;
+    margin-bottom: 16px;
+    border-radius: var(--radius-sm);
+    transition: color var(--transition-fast), background-color var(--transition-fast);
+}
+
+.btn-back:hover {
+    color: var(--text-primary);
+    background: var(--bg-elevated);
+}
+
+.btn-back .material-symbols-rounded {
+    font-size: 20px;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 28px;
 }
 
 .section-title {
-    font-size: 24px;
+    font-size: 18px;
     font-weight: 700;
     margin-bottom: 16px;
-    margin-top: 32px;
+    margin-top: 36px;
 }
 
-/* Loader */
+.section-title:first-child {
+    margin-top: 0;
+}
+
+.text-secondary { color: var(--text-secondary); }
+.text-muted { color: var(--text-muted); }
+.text-accent { color: var(--accent); }
+.text-sm { font-size: 13px; }
+.text-xs { font-size: 12px; }
+
+/* ============================================================
+   Buttons
+   ============================================================ */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 13.5px;
+    padding: 11px 20px;
+    border-radius: var(--radius-full);
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: transform var(--transition-fast), background-color var(--transition-fast),
+        border-color var(--transition-fast), color var(--transition-fast), opacity var(--transition-fast);
+    white-space: nowrap;
+    text-decoration: none;
+}
+
+.btn:active {
+    transform: scale(0.97);
+}
+
+.btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.btn-primary {
+    background: var(--accent);
+    color: var(--accent-contrast);
+}
+.btn-primary:hover:not(:disabled) {
+    background: var(--accent-hover);
+}
+
+.btn-outline {
+    background: transparent;
+    border-color: var(--border-strong);
+    color: var(--text-primary);
+}
+.btn-outline:hover:not(:disabled) {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.btn-ghost {
+    background: transparent;
+    color: var(--text-secondary);
+}
+.btn-ghost:hover:not(:disabled) {
+    color: var(--text-primary);
+    background: var(--bg-elevated);
+}
+
+.btn-danger {
+    background: var(--danger-soft);
+    color: var(--danger);
+    border-color: rgba(255, 92, 108, 0.25);
+}
+.btn-danger:hover:not(:disabled) {
+    background: rgba(255, 92, 108, 0.22);
+}
+
+.btn-sm {
+    padding: 7px 14px;
+    font-size: 12.5px;
+}
+
+.btn-block {
+    width: 100%;
+}
+
+/* ============================================================
+   Forms
+   ============================================================ */
+.field {
+    margin-bottom: 18px;
+}
+
+.field:last-child {
+    margin-bottom: 0;
+}
+
+.field-label {
+    display: block;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 7px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.field-hint {
+    font-size: 12.5px;
+    color: var(--text-muted);
+    margin-top: 6px;
+}
+
+.input,
+.select,
+textarea.input {
+    width: 100%;
+    padding: 11px 14px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-subtle);
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 13.5px;
+    transition: border-color var(--transition-fast), background-color var(--transition-fast);
+}
+
+.input::placeholder {
+    color: var(--text-muted);
+}
+
+.input:hover,
+.select:hover {
+    border-color: var(--border-strong);
+}
+
+.input:focus,
+.select:focus {
+    outline: none;
+    border-color: var(--accent);
+    background: var(--bg-elevated);
+}
+
+.select {
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%239c9ca6' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 36px;
+}
+
+input[type="color"].input {
+    padding: 4px;
+    width: 56px;
+    height: 40px;
+    cursor: pointer;
+}
+
+.input-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.input-row .input {
+    flex: 1;
+    min-width: 180px;
+}
+
+.checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.checkbox-row input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--accent);
+    cursor: pointer;
+}
+
+/* ============================================================
+   Cards / Panels
+   ============================================================ */
+.panel {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 22px;
+    margin-bottom: 16px;
+}
+
+.panel:last-child {
+    margin-bottom: 0;
+}
+
+.panel h3 {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
+.panel-desc {
+    color: var(--text-secondary);
+    font-size: 13px;
+    margin-bottom: 16px;
+    line-height: 1.5;
+}
+
+.settings-section {
+    margin-bottom: 36px;
+}
+
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 20px;
+}
+
+.glass-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    transition: transform var(--transition-normal), box-shadow var(--transition-normal), border-color var(--transition-normal);
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
+.glass-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--border-strong);
+}
+
+.glass-card img {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    background: var(--bg-elevated);
+    display: block;
+}
+
+.glass-card .card-body {
+    padding: 14px;
+}
+
+.glass-card .card-body h3 {
+    font-size: 14.5px;
+    font-weight: 600;
+    margin-bottom: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.glass-card .card-body p {
+    font-size: 12.5px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.artist-card,
+.artist-card img {
+    text-align: center;
+}
+
+.artist-card img,
+.artist-header-img {
+    border-radius: 50% !important;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    background: var(--bg-elevated);
+}
+
+.artist-card .card-body {
+    padding: 16px 12px;
+}
+
+/* Home: play count under the artist (was an inline margin in home.js, which the phone list
+   layout below couldn't override). */
+.glass-card .card-body p.card-count {
+    margin-top: 6px;
+}
+
+/* Radio stations: gradient tiles with an icon instead of cover art. The genre's colour comes
+   in as --radio-grad (set per card by radio.js) rather than as inline styles, so the phone
+   list layout below can move the gradient onto just the icon. */
+.radio-card {
+    background: var(--radio-grad);
+    border: none;
+}
+
+.radio-card .card-body {
+    padding: 28px 20px;
+    text-align: center;
+}
+
+.radio-card .radio-icon {
+    display: inline-block;
+    font-size: 42px;
+    margin-bottom: 12px;
+    opacity: 0.85;
+}
+
+.radio-card .card-body h3 {
+    font-size: 19px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    white-space: normal;
+}
+
+.radio-card .card-body p {
+    opacity: 0.75;
+    white-space: normal;
+}
+
+/* Stat tiles */
+.stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 14px;
+    margin-bottom: 28px;
+}
+
+.stat-tile {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 18px;
+}
+
+.stat-tile .stat-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    margin-bottom: 6px;
+}
+
+.stat-tile .stat-value {
+    font-size: 26px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ============================================================
+   Track rows / lists
+   ============================================================ */
+.track-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.track-row {
+    display: flex;
+    align-items: center;
+    padding: 10px 14px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    gap: 16px;
+    transition: background-color var(--transition-fast);
+}
+
+.track-row:hover {
+    background-color: var(--bg-elevated);
+}
+
+.track-row .track-index {
+    width: 28px;
+    text-align: center;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+    font-size: 13px;
+}
+
+.track-row .track-main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.track-row .track-main .track-title {
+    font-weight: 500;
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.track-row .track-main .track-meta {
+    font-size: 12.5px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.track-row .track-time {
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+    font-size: 12.5px;
+    min-width: 40px;
+    text-align: right;
+}
+
+.list-header {
+    display: flex;
+    padding: 0 14px 10px;
+    border-bottom: 1px solid var(--border-subtle);
+    color: var(--text-muted);
+    font-size: 11.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    margin-bottom: 12px;
+}
+
+/* ============================================================
+   Badges / pills
+   ============================================================ */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 9px;
+    border-radius: var(--radius-full);
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    background: var(--bg-elevated-2);
+    color: var(--text-secondary);
+    vertical-align: middle;
+}
+
+.badge-accent {
+    background: var(--accent-soft);
+    color: var(--accent);
+}
+
+.badge-success {
+    background: var(--success-soft);
+    color: var(--success);
+}
+
+.badge-danger {
+    background: var(--danger-soft);
+    color: var(--danger);
+}
+
+.badge-outline {
+    background: transparent;
+    border: 1px solid var(--border-strong);
+}
+
+/* ============================================================
+   Tabs
+   ============================================================ */
+.tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 28px;
+    border-bottom: 1px solid var(--border-subtle);
+    flex-wrap: wrap;
+}
+
+.tab-btn {
+    background: none;
+    border: none;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 10px 16px;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.tab-btn:hover {
+    color: var(--text-primary);
+}
+
+.tab-btn.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+}
+
+.pill-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.pill-tab {
+    padding: 8px 16px;
+    border-radius: var(--radius-full);
+    border: 1px solid var(--border-subtle);
+    background: transparent;
+    color: var(--text-secondary);
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.pill-tab.active {
+    background: var(--accent);
+    color: var(--accent-contrast);
+    border-color: var(--accent);
+}
+
+.pill-tab:not(.active):hover {
+    border-color: var(--border-strong);
+    color: var(--text-primary);
+}
+
+/* ============================================================
+   Tables
+   ============================================================ */
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.data-table th {
+    text-align: left;
+    padding: 10px 14px;
+    font-weight: 600;
+    font-size: 11.5px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.data-table td {
+    padding: 12px 14px;
+    font-size: 13.5px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.data-table tr:last-child td {
+    border-bottom: none;
+}
+
+.data-table tr:hover td {
+    background: var(--bg-surface);
+}
+
+.table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+}
+
+.table-wrap .data-table th,
+.table-wrap .data-table td {
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+/* ============================================================
+   Status messages
+   ============================================================ */
+.status-msg {
+    font-size: 13px;
+    margin-top: 10px;
+    color: var(--text-secondary);
+}
+
+.status-msg.is-success { color: var(--success); }
+.status-msg.is-error { color: var(--danger); }
+
+.error-msg {
+    padding: 16px 18px;
+    border-radius: var(--radius-md);
+    background: var(--danger-soft);
+    color: var(--danger);
+    font-size: 14px;
+}
+
+.empty-state {
+    padding: 48px 24px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 14px;
+}
+
+/* ============================================================
+   Dropzone (audio upload)
+   ============================================================ */
+.dropzone {
+    border: 2px dashed var(--border-strong);
+    border-radius: var(--radius-md);
+    padding: 36px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color var(--transition-fast), background-color var(--transition-fast);
+    background: var(--bg-surface);
+}
+
+.dropzone:hover,
+.dropzone.dragover {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+}
+
+.dropzone .material-symbols-rounded {
+    font-size: 36px;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+}
+
+.dropzone.dragover .material-symbols-rounded {
+    color: var(--accent);
+}
+
+.dropzone-title {
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 4px;
+}
+
+.dropzone-hint {
+    font-size: 12.5px;
+    color: var(--text-muted);
+}
+
+.upload-file-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 16px;
+}
+
+.upload-file-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    background: var(--bg-elevated);
+    font-size: 13px;
+}
+
+.upload-file-row .material-symbols-rounded {
+    font-size: 18px;
+    color: var(--text-muted);
+}
+
+.upload-file-row .upload-file-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.upload-file-row .upload-file-status {
+    font-size: 11.5px;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+.upload-file-row.is-done .upload-file-status { color: var(--success); }
+.upload-file-row.is-error .upload-file-status { color: var(--danger); }
+
+/* ============================================================
+   Modals
+   ============================================================ */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(4, 4, 6, 0.78);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(6px);
+    animation: fadeIn 0.25s var(--ease);
+    padding: 20px;
+}
+
+.modal-card {
+    width: 100%;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: 32px;
+    position: relative;
+    box-shadow: var(--shadow-lg);
+    animation: slideUp 0.3s var(--ease);
+    max-height: 88vh;
+    overflow-y: auto;
+}
+
+.modal-transport {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-transport-btn {
+    width: 48px;
+    height: 48px;
+    border: 1px solid var(--border-strong);
+    background: transparent;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-primary);
+    transition: all var(--transition-fast);
+}
+
+.modal-transport-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.modal-transport-btn.modal-play-pause {
+    width: 64px;
+    height: 64px;
+    background: var(--accent);
+    border: none;
+    color: var(--accent-contrast);
+}
+
+.modal-transport-btn.modal-play-pause:hover {
+    transform: scale(1.05);
+}
+
+.modal-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+}
+
+.modal-close:hover {
+    background: var(--bg-elevated-2);
+    color: var(--text-primary);
+}
+
+/* --- Now Playing modal (mobile's full-screen player) --- */
+.now-playing-modal-card {
+    max-width: 440px;
+    text-align: center;
+}
+
+.now-playing-modal-cover {
+    width: 240px;
+    height: 240px;
+    max-width: 100%;
+    border-radius: var(--radius-md);
+    object-fit: cover;
+    margin: 0 auto 28px;
+    box-shadow: var(--shadow-lg);
+}
+
+.now-playing-modal-title {
+    font-size: 24px;
+    margin-bottom: 6px;
+    font-weight: 700;
+}
+
+.now-playing-modal-artist {
+    font-size: 16px;
+    margin-bottom: 8px;
+}
+
+.now-playing-modal-album {
+    font-size: 13px;
+    margin-bottom: 8px;
+}
+
+.now-playing-modal-progress {
+    margin-bottom: 24px;
+}
+
+.modal-secondary-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 28px;
+}
+
+.modal-secondary-controls .volume-container {
+    width: 130px;
+}
+
+/* ============================================================
+   Upload indicator (persistent background-upload pill)
+   ============================================================ */
+.upload-indicator {
+    position: fixed;
+    bottom: calc(var(--player-height) + 16px);
+    right: 20px;
+    z-index: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-radius: var(--radius-full);
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-strong);
+    box-shadow: var(--shadow-md);
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-primary);
+    transition: transform var(--transition-normal), opacity var(--transition-normal);
+}
+
+.upload-indicator.hidden {
+    opacity: 0;
+    transform: translateY(8px);
+    pointer-events: none;
+}
+
+.upload-indicator .material-symbols-rounded {
+    font-size: 18px;
+    color: var(--accent);
+    animation: uploadPulse 1.4s ease-in-out infinite;
+}
+
+.upload-indicator.is-done .material-symbols-rounded {
+    color: var(--success);
+    animation: none;
+}
+
+.upload-indicator.is-error .material-symbols-rounded {
+    color: var(--danger);
+    animation: none;
+}
+
+@keyframes uploadPulse {
+    0%, 100% { transform: translateY(0); opacity: 1; }
+    50% { transform: translateY(-2px); opacity: 0.6; }
+}
+
+/* ============================================================
+   Route progress bar (subtle top loading indicator, no full-page flash)
+   ============================================================ */
+.route-progress {
+    position: fixed;
+    top: 0; left: 0;
+    height: 2.5px;
+    width: 0%;
+    background: var(--accent);
+    z-index: 10000;
+    opacity: 0;
+    pointer-events: none;
+    box-shadow: 0 0 8px var(--accent-soft);
+}
+
+/* ============================================================
+   Misc
+   ============================================================ */
+.hidden {
+    display: none !important;
+}
+
+.hover-underline:hover {
+    text-decoration: underline !important;
+}
+
+.btn-like-track,
+#btn-like {
+    color: var(--text-muted);
+}
+
+.btn-like-active {
+    color: #ff4d6d !important;
+}
+
 .page-loader {
     display: flex;
     justify-content: center;
@@ -445,11 +1902,204 @@ input[type=range]:active::-webkit-slider-thumb {
 }
 
 .spinner {
-    width: 40px; height: 40px;
-    border: 3px solid var(--bg-elevated);
+    width: 36px; height: 36px;
+    border: 3px solid var(--bg-elevated-2);
     border-top-color: var(--accent);
     border-radius: 50%;
-    animation: spin 1s linear infinite;
+    animation: spin 0.8s linear infinite;
 }
 
 @keyframes spin { 100% { transform: rotate(360deg); } }
+
+/* ============================================================
+   Responsive
+   ============================================================ */
+
+/* Tablet and below: the sidebar becomes a fixed bottom tab bar (there's no room for a
+   240px rail, and a hidden-with-no-replacement nav - the old behavior here - left mobile
+   with no way to navigate at all), and the lyrics/queue panel becomes a full overlay
+   instead of a 320px column that wouldn't leave room for anything else. */
+@media (max-width: 900px) {
+    :root { --bottom-nav-height: 64px; }
+
+    .sidebar {
+        position: fixed;
+        left: 0; right: 0; bottom: 0; top: auto;
+        width: 100%;
+        height: var(--bottom-nav-height);
+        padding: 0 4px;
+        padding-bottom: env(safe-area-inset-bottom, 0);
+        flex-direction: row;
+        background-color: rgba(14, 14, 17, 0.92);
+        backdrop-filter: blur(24px) saturate(1.4);
+        -webkit-backdrop-filter: blur(24px) saturate(1.4);
+        border-top: 1px solid var(--border-subtle);
+        z-index: 300;
+    }
+
+    .sidebar-header { display: none; }
+
+    .nav-links {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-around;
+        width: 100%;
+        gap: 0;
+    }
+
+    .nav-links li.spacer { display: none; }
+
+    .nav-btn {
+        flex-direction: column;
+        gap: 2px;
+        padding: 6px 10px;
+        font-size: 10px;
+        border-radius: var(--radius-sm);
+    }
+
+    .nav-btn .material-symbols-rounded {
+        font-size: 22px;
+    }
+
+    .nav-btn.active {
+        background: none;
+        color: var(--accent);
+    }
+
+    .right-panel {
+        position: fixed;
+        inset: 0 0 calc(var(--player-height) + var(--bottom-nav-height)) 0;
+        width: 100%;
+    }
+
+    .player-bar {
+        bottom: var(--bottom-nav-height);
+    }
+
+    .main-content {
+        padding: 24px;
+        padding-bottom: calc(var(--player-height) + var(--bottom-nav-height) + 24px);
+    }
+
+    .now-playing { min-width: 0; width: auto; }
+    .extra-controls { min-width: 0; }
+}
+
+/* Phone: the player bar can't fit transport + seek bar + quality/FX/lyrics/volume on a
+   narrow screen, so it collapses to a mini-player (cover, title, prev/play/next) and
+   everything else (seek bar, volume, lyrics, FX, quality) moves into the full-screen
+   now-playing modal, opened by tapping the mini-player - see nowplaying-modal.js. */
+@media (max-width: 640px) {
+    :root { --player-height: 64px; }
+
+    .xs-hidden { display: none !important; }
+
+    .player-bar { padding: 0 12px; gap: 8px; }
+    .now-playing { gap: 10px; cursor: pointer; }
+    .cover-art { width: 42px; height: 42px; }
+    .player-controls { flex: 0 1 auto; max-width: none; gap: 0; }
+    .control-buttons { gap: 12px; }
+
+    .main-content { padding: 16px; padding-bottom: calc(var(--player-height) + var(--bottom-nav-height) + 16px); }
+
+    .modal-card { padding: 24px 20px; }
+    .now-playing-modal-cover { width: 200px; height: 200px; }
+}
+
+/* Phone: the card mosaics (home's most played, library artists/albums, an artist's albums and
+   singles, radio stations) become compact list rows. At this width a mosaic is one column of
+   tiles whose cover is as wide as the screen - each item took a whole screen on its own, so
+   getting through even a handful meant scrolling for ages. Same markup, so tapping and links
+   behave exactly as before. */
+@media (max-width: 640px) {
+    .card-grid {
+        grid-template-columns: 1fr;
+        gap: 2px;
+        /* Rows are inset by their own padding; pull the grid out by the same amount so the
+           covers line up with the page title's left edge (the pressed highlight still fits). */
+        margin-inline: -10px;
+    }
+
+    .glass-card {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 8px 10px;
+        background: transparent;
+        border: none;
+        border-radius: var(--radius-sm);
+        transition: background-color var(--transition-fast);
+    }
+
+    /* It's a row now, not a tile: no lift or shadow (and :hover sticks after a tap on touch). */
+    .glass-card:hover {
+        transform: none;
+        box-shadow: none;
+    }
+
+    .glass-card:active {
+        background: var(--bg-elevated);
+    }
+
+    .glass-card img {
+        flex: none;
+        width: 56px;
+        height: 56px;
+        border-radius: var(--radius-sm);
+    }
+
+    .glass-card .card-body,
+    .artist-card .card-body {
+        flex: 1;
+        min-width: 0;
+        padding: 0;
+        text-align: left;
+    }
+
+    .glass-card .card-body p.card-count {
+        margin-top: 2px;
+    }
+
+    /* Radio: the gradient goes on the icon tile only; the row itself stays plain like the rest. */
+    .radio-card {
+        background: transparent;
+    }
+
+    .radio-card .card-body {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 0;
+        text-align: left;
+    }
+
+    .radio-card .radio-icon {
+        flex: none;
+        display: grid;
+        place-items: center;
+        width: 56px;
+        height: 56px;
+        border-radius: var(--radius-sm);
+        background: var(--radio-grad);
+        font-size: 28px;
+        margin: 0;
+        opacity: 1;
+    }
+
+    .radio-card .radio-text {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .radio-card .card-body h3 {
+        font-size: 14.5px;
+        font-weight: 600;
+        margin-bottom: 3px;
+        white-space: nowrap;
+    }
+
+    .radio-card .card-body p {
+        opacity: 1;
+        white-space: nowrap;
+    }
+}

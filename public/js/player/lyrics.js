@@ -1,4 +1,5 @@
 import { Api } from '../api.js';
+import { Player } from './player.js';
 
 let parsedLyrics = []; // Array of { time: num, text: "string" }
 let currentLyricIndex = -1;
@@ -17,7 +18,7 @@ export async function loadLyrics(track) {
             parsedLyrics = parseLRC(data.syncedLyrics);
             renderLyrics();
         } else if (data && data.plainLyrics) {
-            lyricsContainer.innerHTML = `<div class="plain-lyrics">${data.plainLyrics.replace(/\\n/g, '<br>')}</div>`;
+            lyricsContainer.innerHTML = `<div class="plain-lyrics">${data.plainLyrics.replace(/\n/g, '<br>')}</div>`;
         } else {
             lyricsContainer.innerHTML = '<div class="no-lyrics">Aucune parole trouvée.</div>';
         }
@@ -27,23 +28,33 @@ export async function loadLyrics(track) {
 }
 
 function parseLRC(lrcText) {
-    const lines = lrcText.split('\\n');
+    // Real newlines from the API, not literal "\n" - and LRC timestamps use single
+    // backslashes in a regex literal (a doubled "\\[" here would match a literal
+    // backslash instead of the "[", which is why sync silently failed before).
+    const lines = lrcText.split(/\r?\n/);
     const lyrics = [];
-    const timeReg = /\\[(\\d{2}):(\\d{2})\\.(\\d{2,3})\\]/;
+    const timeReg = /\[(\d{2}):(\d{2})(?:\.(\d{2,3}))?\]/g;
 
     lines.forEach(line => {
-        const match = timeReg.exec(line);
-        if (match) {
+        const matches = [...line.matchAll(timeReg)];
+        if (!matches.length) return;
+
+        const text = line.replace(timeReg, '').trim();
+        if (!text) return;
+
+        // A line can carry multiple timestamps (repeated chorus lines in some LRC
+        // sources) - each one gets its own entry pointing at the same text.
+        matches.forEach(match => {
             const min = parseInt(match[1], 10);
             const sec = parseInt(match[2], 10);
-            const ms = parseInt(match[3], 10) * (match[3].length === 2 ? 10 : 1);
+            const msRaw = match[3] || '0';
+            const ms = parseInt(msRaw, 10) * (msRaw.length === 2 ? 10 : 1);
             const time = min * 60 + sec + ms / 1000;
-            const text = line.replace(timeReg, '').trim();
-            if (text) {
-                lyrics.push({ time, text });
-            }
-        }
+            lyrics.push({ time, text });
+        });
     });
+
+    lyrics.sort((a, b) => a.time - b.time);
     return lyrics;
 }
 
@@ -53,6 +64,13 @@ function renderLyrics() {
         html += `<p id="lyric-${i}" class="lyric-line">${line.text}</p>`;
     });
     lyricsContainer.innerHTML = html;
+
+    // Apple-Music-style: click a line to jump playback straight to where it's sung.
+    parsedLyrics.forEach((line, i) => {
+        document.getElementById(`lyric-${i}`)?.addEventListener('click', () => {
+            Player.seekToTime(line.time);
+        });
+    });
 }
 
 export function syncLyrics(currentTime) {

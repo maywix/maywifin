@@ -67,6 +67,37 @@ db.exec(`
             played_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
         );
+
+        CREATE TABLE IF NOT EXISTS tracks (
+            id TEXT PRIMARY KEY,
+            source TEXT NOT NULL DEFAULT 'local',
+            path TEXT,
+            title TEXT,
+            artist TEXT,
+            album TEXT,
+            album_artist TEXT,
+            genre TEXT,
+            year INTEGER,
+            track_no INTEGER,
+            duration REAL,
+            container TEXT,
+            codec TEXT,
+            sample_rate INTEGER,
+            bit_depth INTEGER,
+            channels INTEGER,
+            channel_layout TEXT,
+            bitrate INTEGER,
+            is_lossless INTEGER DEFAULT 0,
+            is_atmos INTEGER DEFAULT 0,
+            atmos_confidence TEXT,
+            media_type TEXT DEFAULT 'audio',
+            scan_error TEXT,
+            file_mtime INTEGER,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_tracks_album ON tracks(album);
+        CREATE INDEX IF NOT EXISTS idx_tracks_artist ON tracks(artist);
 `);
 
 function hashPassword(password) {
@@ -87,6 +118,8 @@ const defaultSettings = [
   ["player_crossfade", "0"],
   ["auto_scan_interval", "0"],
   ["require_auth", "1"],
+  ["transcode_max_concurrent", "4"],
+  ["transcode_default_tier", "lossless"],
 ];
 
 const upsertSetting = db.prepare(
